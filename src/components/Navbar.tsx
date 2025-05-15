@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { Home, Upload, ChartBar, LayoutDashboard, Contact } from 'lucide-react';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -20,12 +22,24 @@ const Navbar = () => {
   }, []);
 
   const scrollToSection = (sectionId: string) => {
-    const section = document.getElementById(sectionId);
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth' });
-      setMobileMenuOpen(false);
+    // If we're on the home page, scroll to the section
+    if (window.location.pathname === '/') {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth' });
+      }
     }
+    setMobileMenuOpen(false);
   };
+
+  // Navigation links with icons
+  const navigationLinks = [
+    { name: 'Home', path: '/', icon: Home },
+    { name: 'Upload Resume', path: '/upload', icon: Upload },
+    { name: 'Resume Summary', path: '/resume-summary', icon: ChartBar },
+    { name: 'Job Fitment', path: '/job-fitment', icon: LayoutDashboard },
+    { name: 'Contact', path: '/#contact', icon: Contact, isAnchor: true },
+  ];
 
   return (
     <nav
@@ -35,37 +49,39 @@ const Navbar = () => {
     >
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
-          <h1 className="text-xl font-bold text-talentsleuth">
+          <Link to="/" className="text-xl font-bold text-talentsleuth">
             TalentSleuth<span className="text-talentsleuth-accent">AI</span>
-          </h1>
+          </Link>
         </div>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex space-x-8">
-          <button
-            onClick={() => scrollToSection('features')}
-            className="text-gray-700 hover:text-talentsleuth-accent transition-colors"
-          >
-            Features
-          </button>
-          <button
-            onClick={() => scrollToSection('how-it-works')}
-            className="text-gray-700 hover:text-talentsleuth-accent transition-colors"
-          >
-            How It Works
-          </button>
-          <button
-            onClick={() => scrollToSection('contact')}
-            className="text-gray-700 hover:text-talentsleuth-accent transition-colors"
-          >
-            Contact
-          </button>
+        <div className="hidden md:flex space-x-6">
+          {navigationLinks.map((link) => (
+            <div key={link.name}>
+              {link.isAnchor ? (
+                <button
+                  onClick={() => scrollToSection('contact')}
+                  className="text-gray-700 hover:text-talentsleuth-accent transition-colors flex items-center gap-1"
+                >
+                  <link.icon className="h-4 w-4" />
+                  {link.name}
+                </button>
+              ) : (
+                <Link
+                  to={link.path}
+                  className="text-gray-700 hover:text-talentsleuth-accent transition-colors flex items-center gap-1"
+                >
+                  <link.icon className="h-4 w-4" />
+                  {link.name}
+                </Link>
+              )}
+            </div>
+          ))}
         </div>
 
         <div className="hidden md:block">
           <Button 
             className="bg-talentsleuth hover:bg-talentsleuth-dark text-white"
-            onClick={() => scrollToSection('hero')}
           >
             Sign In
           </Button>
@@ -114,27 +130,30 @@ const Navbar = () => {
       {mobileMenuOpen && (
         <div className="md:hidden bg-white shadow-lg rounded-b-lg mt-4 py-4 px-6 absolute left-0 right-0">
           <div className="flex flex-col space-y-4">
-            <button
-              onClick={() => scrollToSection('features')}
-              className="text-gray-700 hover:text-talentsleuth-accent transition-colors"
-            >
-              Features
-            </button>
-            <button
-              onClick={() => scrollToSection('how-it-works')}
-              className="text-gray-700 hover:text-talentsleuth-accent transition-colors"
-            >
-              How It Works
-            </button>
-            <button
-              onClick={() => scrollToSection('contact')}
-              className="text-gray-700 hover:text-talentsleuth-accent transition-colors"
-            >
-              Contact
-            </button>
+            {navigationLinks.map((link) => (
+              <div key={link.name}>
+                {link.isAnchor ? (
+                  <button
+                    onClick={() => scrollToSection('contact')}
+                    className="text-gray-700 hover:text-talentsleuth-accent transition-colors flex items-center gap-2"
+                  >
+                    <link.icon className="h-4 w-4" />
+                    {link.name}
+                  </button>
+                ) : (
+                  <Link
+                    to={link.path}
+                    className="text-gray-700 hover:text-talentsleuth-accent transition-colors flex items-center gap-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <link.icon className="h-4 w-4" />
+                    {link.name}
+                  </Link>
+                )}
+              </div>
+            ))}
             <Button 
               className="bg-talentsleuth hover:bg-talentsleuth-dark text-white w-full"
-              onClick={() => scrollToSection('hero')}
             >
               Sign In
             </Button>
