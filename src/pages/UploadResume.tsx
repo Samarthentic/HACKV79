@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Check, Upload, Loader } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -7,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { toast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 type FileStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -16,6 +16,7 @@ const UploadResume = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [status, setStatus] = useState<FileStatus>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
   
   const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
   const fileExtensions = ['.pdf', '.docx'];
@@ -108,12 +109,14 @@ const UploadResume = () => {
     
     if (status !== 'success') {
       simulateUpload();
+      
+      // After 3 seconds, redirect to resume summary
+      setTimeout(() => {
+        navigate('/resume-summary');
+      }, 3000);
     } else {
-      // In a real app, redirect to the next page or process the file
-      toast({
-        title: "Processing resume",
-        description: "Your resume is being analyzed by our AI.",
-      });
+      // Go to summary page immediately if already uploaded
+      navigate('/resume-summary');
     }
   };
 
