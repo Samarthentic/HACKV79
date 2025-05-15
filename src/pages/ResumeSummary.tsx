@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
 import { Edit } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -155,6 +155,7 @@ const EditDialog = ({ title, content, onSave }: EditDialogProps) => {
 
 const ResumeSummary = () => {
   const [resumeData, setResumeData] = useState(initialResumeData);
+  const navigate = useNavigate();
 
   const handleSectionUpdate = (section: EditableSection, updatedData: any) => {
     setResumeData({
@@ -292,8 +293,17 @@ const ResumeSummary = () => {
         </Card>
 
         <div className="flex justify-end">
-          <Button className="bg-talentsleuth hover:bg-talentsleuth-light">
-            Continue
+          <Button 
+            variant="outline" 
+            className="mr-2"
+          >
+            Back
+          </Button>
+          <Button 
+            className="bg-talentsleuth hover:bg-talentsleuth-light"
+            onClick={() => navigate('/job-fitment')}
+          >
+            Continue to Job Matches
           </Button>
         </div>
       </div>
