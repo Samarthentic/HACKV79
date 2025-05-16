@@ -73,11 +73,22 @@
   }
   body {
     @apply bg-background text-foreground;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Add padding to main content to account for fixed navbar */
+  main {
+    padding-top: 4rem;
   }
 }
 
 @layer components {
   .section-padding {
-    @apply pt-24 px-4;
+    @apply py-16 px-4 md:px-8 lg:px-12;
+  }
+  
+  .container-custom {
+    @apply w-full max-w-7xl mx-auto px-4 md:px-6;
   }
 }

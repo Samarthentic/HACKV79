@@ -55,12 +55,12 @@ const ProcessingResume = () => {
   }, [navigate, totalDuration]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       
-      <div className="flex-1 flex items-center justify-center p-6">
+      <div className="flex-1 flex items-center justify-center p-6 pt-24">
         <div className="max-w-md w-full">
-          <div className="text-center mb-10">
+          <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2 text-talentsleuth">Processing Your Resume</h1>
             <p className="text-gray-600">
               This may take up to 30 seconds. Please don't close this page.
@@ -74,7 +74,7 @@ const ProcessingResume = () => {
               </div>
             </div>
             
-            <div className="space-y-8">
+            <div className="space-y-6">
               {processingSteps.map((step, index) => (
                 <div key={index} className="space-y-2">
                   <div className="flex justify-between items-center">
@@ -107,7 +107,7 @@ const ProcessingResume = () => {
               ))}
             </div>
 
-            <div className="mt-8 text-center text-sm text-gray-500">
+            <div className="mt-6 text-center text-sm text-gray-500">
               <p>TalentSleuth AI is analyzing your resume and gathering relevant information.</p>
             </div>
           </div>
