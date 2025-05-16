@@ -110,13 +110,13 @@ const UploadResume = () => {
     if (status !== 'success') {
       simulateUpload();
       
-      // After 3 seconds, redirect to resume summary
+      // After 3 seconds, redirect to processing screen
       setTimeout(() => {
-        navigate('/resume-summary');
+        navigate('/processing');
       }, 3000);
     } else {
-      // Go to summary page immediately if already uploaded
-      navigate('/resume-summary');
+      // Go to processing page immediately if already uploaded
+      navigate('/processing');
     }
   };
 

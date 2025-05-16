@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import UploadResume from "./pages/UploadResume";
+import ProcessingResume from "./pages/ProcessingResume";
 import ResumeSummary from "./pages/ResumeSummary";
 import JobFitment from "./pages/JobFitment";
 import NotFound from "./pages/NotFound";
@@ -21,6 +22,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/upload" element={<UploadResume />} />
+          <Route path="/processing" element={<ProcessingResume />} />
           <Route path="/resume-summary" element={<ResumeSummary />} />
           <Route path="/job-fitment" element={<JobFitment />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
