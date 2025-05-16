@@ -43,7 +43,8 @@ const Navbar = () => {
     { name: 'Home', path: '/', icon: Home },
     { name: 'Upload Resume', path: '/upload', icon: Upload },
     { name: 'Resume Summary', path: '/resume-summary', icon: ChartBar },
-    { name: 'Job Fitment', path: '/job-fitment', icon: LayoutDashboard },
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Job Fitment', path: '/job-fitment', icon: ChartBar },
     { name: 'Contact', path: '/#contact', icon: Contact, isAnchor: true },
   ];
 

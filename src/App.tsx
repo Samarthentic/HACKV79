@@ -11,6 +11,7 @@ import UploadResume from "./pages/UploadResume";
 import ProcessingResume from "./pages/ProcessingResume";
 import ResumeSummary from "./pages/ResumeSummary";
 import JobFitment from "./pages/JobFitment";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 // Import CSS
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/processing" element={<ProcessingResume />} />
             <Route path="/resume-summary" element={<ResumeSummary />} />
             <Route path="/job-fitment" element={<JobFitment />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -22,11 +22,11 @@ const Hero = () => {
               Upload Resume
             </Button>
           </Link>
-          <a href="#features">
+          <Link to="/dashboard">
             <Button variant="outline" size="lg" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
-              Learn More
+              View Dashboard
             </Button>
-          </a>
+          </Link>
         </div>
       </div>
       
