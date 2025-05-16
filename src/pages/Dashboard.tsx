@@ -100,76 +100,90 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-8 flex-grow">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome, {candidateData.name}</h1>
+      <div className="container mx-auto px-4 py-6 flex-grow">
+        {/* Welcome Section with subtle background */}
+        <div className="mb-8 bg-gradient-to-r from-talentsleuth/5 to-talentsleuth-light/10 p-6 rounded-lg shadow-sm">
+          <h1 className="text-3xl font-bold mb-2 text-talentsleuth-dark">Welcome, {candidateData.name}</h1>
           <p className="text-gray-600">Here's your talent dashboard with insights and suggestions</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column */}
           <div className="space-y-6">
             {/* Resume Overview Card */}
-            <Card>
+            <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow">
+              <div className="h-2 bg-talentsleuth-light w-full"></div>
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center">
-                  <FileText className="mr-2 h-5 w-5 text-talentsleuth" />
-                  Last Resume
-                </CardTitle>
-                <CardDescription>Uploaded on {candidateData.resumeUploadDate}</CardDescription>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center text-lg">
+                    <FileText className="mr-2 h-5 w-5 text-talentsleuth" />
+                    Last Resume
+                  </CardTitle>
+                  <span className="text-xs text-gray-500">Uploaded on {candidateData.resumeUploadDate}</span>
+                </div>
+                <CardDescription>Your latest resume analysis</CardDescription>
               </CardHeader>
               <CardContent>
-                <p>{candidateData.resumeSummary}</p>
+                <p className="text-sm text-gray-700">{candidateData.resumeSummary}</p>
               </CardContent>
               <CardFooter>
-                <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/resume-summary')}>
+                <Button variant="outline" size="sm" className="w-full border-talentsleuth text-talentsleuth hover:bg-talentsleuth/10" 
+                  onClick={() => navigate('/resume-summary')}>
                   View Full Resume
                 </Button>
               </CardFooter>
             </Card>
             
             {/* Job Fitment Score Card */}
-            <Card>
+            <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow">
+              <div className="h-2 bg-talentsleuth w-full"></div>
               <CardHeader className="pb-2">
-                <CardTitle>Job Fitment Score</CardTitle>
+                <CardTitle className="text-lg">Job Fitment Score</CardTitle>
+                <CardDescription>How well you match job requirements</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-3xl font-bold">{candidateData.fitmentScore}%</span>
-                  <span className={`px-3 py-1 rounded-full text-sm ${getFitmentColor(candidateData.fitmentScore)}`}>
-                    {candidateData.fitmentScore >= 80 ? "Good Match" : 
-                     candidateData.fitmentScore >= 60 ? "Moderate Match" : 
-                     "Low Match"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 h-16 rounded-full border-4 border-talentsleuth flex items-center justify-center text-xl font-bold text-talentsleuth">
+                      {candidateData.fitmentScore}%
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-sm ${getFitmentColor(candidateData.fitmentScore)}`}>
+                      {candidateData.fitmentScore >= 80 ? "Good Match" : 
+                      candidateData.fitmentScore >= 60 ? "Moderate Match" : 
+                      "Low Match"}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-500">
-                  {candidateData.fitmentReason}
-                </p>
+                <div className="mt-2 text-sm text-gray-600">
+                  <span className="font-semibold">Reason:</span> {candidateData.fitmentReason}
+                </div>
               </CardContent>
               <CardFooter>
-                <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/job-fitment')}>
+                <Button variant="outline" size="sm" className="w-full border-talentsleuth text-talentsleuth hover:bg-talentsleuth/10" 
+                  onClick={() => navigate('/job-fitment')}>
                   View Job Match Details
                 </Button>
               </CardFooter>
             </Card>
             
             {/* Red Flags Card */}
-            <Card>
+            <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow">
+              <div className="h-2 bg-destructive w-full"></div>
               <CardHeader className="pb-2">
-                <CardTitle className="flex items-center">
-                  <AlertTriangle className="mr-2 h-5 w-5 text-red-500" />
+                <CardTitle className="flex items-center text-lg">
+                  <AlertTriangle className="mr-2 h-5 w-5 text-destructive" />
                   Red Flags
                 </CardTitle>
+                <CardDescription>Issues that need your attention</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {candidateData.redFlags.map((flag) => (
-                  <Alert key={flag.id} variant={flag.severity === "high" ? "destructive" : "default"} className="py-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription className="ml-2">{flag.message}</AlertDescription>
+                  <Alert key={flag.id} variant="default" className="bg-red-50 border-red-200 py-2">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    <AlertDescription className="ml-2 text-sm">{flag.message}</AlertDescription>
                   </Alert>
                 ))}
               </CardContent>
@@ -179,94 +193,100 @@ const Dashboard = () => {
           {/* Middle Column */}
           <div className="space-y-6">
             {/* Public Profiles */}
-            <Card>
+            <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow">
+              <div className="h-2 bg-[#0A66C2] w-full"></div>
               <CardHeader>
-                <CardTitle>LinkedIn Profile</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex items-center">
+                <CardTitle className="flex items-center text-lg">
                   <Linkedin className="mr-2 h-5 w-5 text-[#0A66C2]" />
-                  <div>
-                    <h4 className="font-medium">{candidateData.profiles.linkedin.name}</h4>
-                    <p className="text-sm text-gray-500">{candidateData.profiles.linkedin.title}</p>
-                  </div>
+                  LinkedIn Profile
+                </CardTitle>
+                <CardDescription>Professional network data</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="p-3 bg-blue-50 rounded-md">
+                  <h4 className="font-medium">{candidateData.profiles.linkedin.name}</h4>
+                  <p className="text-sm text-gray-600">{candidateData.profiles.linkedin.title}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium mt-2">Skills</p>
-                  <div className="flex flex-wrap gap-1 mt-1">
+                  <p className="text-sm font-medium mb-2">Skills</p>
+                  <div className="flex flex-wrap gap-1">
                     {candidateData.profiles.linkedin.skills.map((skill) => (
-                      <Badge key={skill} variant="outline" className="bg-blue-50">{skill}</Badge>
+                      <Badge key={skill} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">{skill}</Badge>
                     ))}
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded-md">
                   <span className="font-medium">Recent Activity:</span> {candidateData.profiles.linkedin.recentActivity}
-                </p>
+                </div>
               </CardContent>
               <CardFooter>
-                <Button variant="outline" size="sm" className="w-full">
+                <Button variant="outline" size="sm" className="w-full border-[#0A66C2] text-[#0A66C2] hover:bg-blue-50">
                   Verify LinkedIn Data
                 </Button>
               </CardFooter>
             </Card>
             
-            <Card>
+            <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow">
+              <div className="h-2 bg-gray-800 w-full"></div>
               <CardHeader>
-                <CardTitle>GitHub Profile</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex items-center">
+                <CardTitle className="flex items-center text-lg">
                   <Github className="mr-2 h-5 w-5" />
-                  <div>
-                    <h4 className="font-medium">{candidateData.profiles.github.name}</h4>
-                    <p className="text-sm text-gray-500">{candidateData.profiles.github.title}</p>
-                  </div>
+                  GitHub Profile
+                </CardTitle>
+                <CardDescription>Code repository contributions</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="p-3 bg-gray-50 rounded-md">
+                  <h4 className="font-medium">{candidateData.profiles.github.name}</h4>
+                  <p className="text-sm text-gray-600">{candidateData.profiles.github.title}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium mt-2">Tech Stack</p>
-                  <div className="flex flex-wrap gap-1 mt-1">
+                  <p className="text-sm font-medium mb-2">Tech Stack</p>
+                  <div className="flex flex-wrap gap-1">
                     {candidateData.profiles.github.skills.map((skill) => (
-                      <Badge key={skill} variant="outline" className="bg-gray-50">{skill}</Badge>
+                      <Badge key={skill} variant="outline" className="bg-gray-100 text-gray-700 border-gray-300">{skill}</Badge>
                     ))}
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded-md">
                   <span className="font-medium">Recent Activity:</span> {candidateData.profiles.github.recentActivity}
-                </p>
+                </div>
               </CardContent>
               <CardFooter>
-                <Button variant="outline" size="sm" className="w-full">
+                <Button variant="outline" size="sm" className="w-full border-gray-800 text-gray-800 hover:bg-gray-100">
                   Verify GitHub Data
                 </Button>
               </CardFooter>
             </Card>
             
-            <Card>
+            <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow">
+              <div className="h-2 bg-blue-600 w-full"></div>
               <CardHeader>
-                <CardTitle>Naukri Profile</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex items-center">
+                <CardTitle className="flex items-center text-lg">
                   <Search className="mr-2 h-5 w-5 text-blue-600" />
-                  <div>
-                    <h4 className="font-medium">{candidateData.profiles.naukri.name}</h4>
-                    <p className="text-sm text-gray-500">{candidateData.profiles.naukri.title}</p>
-                  </div>
+                  Naukri Profile
+                </CardTitle>
+                <CardDescription>Job portal information</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="p-3 bg-blue-50 rounded-md">
+                  <h4 className="font-medium">{candidateData.profiles.naukri.name}</h4>
+                  <p className="text-sm text-gray-600">{candidateData.profiles.naukri.title}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium mt-2">Skills</p>
-                  <div className="flex flex-wrap gap-1 mt-1">
+                  <p className="text-sm font-medium mb-2">Skills</p>
+                  <div className="flex flex-wrap gap-1">
                     {candidateData.profiles.naukri.skills.map((skill) => (
-                      <Badge key={skill} variant="outline" className="bg-blue-50">{skill}</Badge>
+                      <Badge key={skill} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">{skill}</Badge>
                     ))}
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded-md">
                   <span className="font-medium">Recent Activity:</span> {candidateData.profiles.naukri.recentActivity}
-                </p>
+                </div>
               </CardContent>
               <CardFooter>
-                <Button variant="outline" size="sm" className="w-full">
+                <Button variant="outline" size="sm" className="w-full border-blue-600 text-blue-600 hover:bg-blue-50">
                   Verify Naukri Data
                 </Button>
               </CardFooter>
@@ -276,12 +296,14 @@ const Dashboard = () => {
           {/* Right Column */}
           <div className="space-y-6">
             {/* Skills Card */}
-            <Card>
+            <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow">
+              <div className="h-2 bg-yellow-500 w-full"></div>
               <CardHeader>
-                <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center text-lg">
                   <Star className="mr-2 h-5 w-5 text-yellow-500" />
                   My Skills
                 </CardTitle>
+                <CardDescription>Your expertise areas</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
@@ -295,19 +317,21 @@ const Dashboard = () => {
             </Card>
             
             {/* Suggested Roles Card */}
-            <Card>
+            <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow">
+              <div className="h-2 bg-talentsleuth w-full"></div>
               <CardHeader>
-                <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center text-lg">
                   <Briefcase className="mr-2 h-5 w-5 text-talentsleuth" />
                   Suggested Roles
                 </CardTitle>
+                <CardDescription>Career paths that match your profile</CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
+                <ul className="space-y-3">
                   {candidateData.suggestedRoles.map((role, index) => (
-                    <li key={index} className="flex items-center">
-                      <CheckCircle className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
-                      <span>{role}</span>
+                    <li key={index} className="flex items-center bg-gray-50 p-3 rounded-md hover:bg-gray-100 transition-colors">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
+                      <span className="text-gray-800">{role}</span>
                     </li>
                   ))}
                 </ul>
@@ -315,21 +339,23 @@ const Dashboard = () => {
             </Card>
             
             {/* Next Steps Card */}
-            <Card>
+            <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow">
+              <div className="h-2 bg-talentsleuth-accent w-full"></div>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <ListChecks className="mr-2 h-5 w-5 text-talentsleuth" />
+                <CardTitle className="flex items-center text-lg">
+                  <ListChecks className="mr-2 h-5 w-5 text-talentsleuth-accent" />
                   Next Steps
                 </CardTitle>
+                <CardDescription>Recommended actions to improve your profile</CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
+                <ul className="space-y-3">
                   {candidateData.nextSteps.map((step, index) => (
-                    <li key={index} className="flex items-start">
-                      <div className="bg-talentsleuth text-white rounded-full h-5 w-5 flex items-center justify-center text-xs mr-2 flex-shrink-0 mt-0.5">
+                    <li key={index} className="flex items-start bg-gray-50 p-3 rounded-md">
+                      <div className="bg-talentsleuth text-white rounded-full h-6 w-6 flex items-center justify-center text-xs mr-3 flex-shrink-0 mt-0.5">
                         {index + 1}
                       </div>
-                      <span>{step}</span>
+                      <span className="text-gray-700">{step}</span>
                     </li>
                   ))}
                 </ul>
@@ -337,25 +363,29 @@ const Dashboard = () => {
             </Card>
             
             {/* Mock Backend Actions */}
-            <Card>
+            <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow">
+              <div className="h-2 bg-talentsleuth-accent w-full"></div>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Zap className="mr-2 h-5 w-5 text-talentsleuth" />
+                <CardTitle className="flex items-center text-lg">
+                  <Zap className="mr-2 h-5 w-5 text-talentsleuth-accent" />
                   Backend Actions
                 </CardTitle>
                 <CardDescription>Testing backend integration</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button onClick={handleParseResume} variant="outline" className="w-full justify-start">
-                  <FileText className="mr-2 h-4 w-4" />
+                <Button onClick={handleParseResume} 
+                  className="w-full justify-start bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-sm">
+                  <FileText className="mr-2 h-4 w-4 text-talentsleuth" />
                   Parse Resume
                 </Button>
-                <Button onClick={handleSearchProfiles} variant="outline" className="w-full justify-start">
-                  <Search className="mr-2 h-4 w-4" />
+                <Button onClick={handleSearchProfiles} 
+                  className="w-full justify-start bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-sm">
+                  <Search className="mr-2 h-4 w-4 text-blue-600" />
                   Search Profiles
                 </Button>
-                <Button onClick={handleCalculateScore} variant="outline" className="w-full justify-start">
-                  <CheckCircle className="mr-2 h-4 w-4" />
+                <Button onClick={handleCalculateScore} 
+                  className="w-full justify-start bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 shadow-sm">
+                  <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
                   Calculate Score
                 </Button>
               </CardContent>
