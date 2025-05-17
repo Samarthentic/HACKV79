@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import llmService from '@/services/llm/llmService';
+import { Shield, AlertTriangle } from 'lucide-react';
 
 interface ApiKeySetupProps {
   onConfigured: () => void;
@@ -64,14 +65,17 @@ const ApiKeySetup: React.FC<ApiKeySetupProps> = ({ onConfigured }) => {
   };
 
   return (
-    <Card className="w-full max-w-lg mx-auto">
-      <CardHeader>
-        <CardTitle>Configure AI Integration</CardTitle>
-        <CardDescription>
-          Enter your OpenAI API key to enable enhanced resume analysis and job matching using GPT-4o
+    <Card className="w-full max-w-lg mx-auto border-talentsleuth/20 shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-talentsleuth/10 to-transparent">
+        <CardTitle className="flex items-center gap-2 text-talentsleuth">
+          <Shield className="h-6 w-6" />
+          Configure AI Integration
+        </CardTitle>
+        <CardDescription className="text-base">
+          Enter your OpenAI API key to enable premium resume analysis and job matching using our advanced AI system
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -85,10 +89,13 @@ const ApiKeySetup: React.FC<ApiKeySetupProps> = ({ onConfigured }) => {
                 onChange={(e) => setApiKey(e.target.value)}
                 className="w-full"
               />
-              <p className="text-xs text-gray-500">
-                Your API key is stored locally in your browser and is never sent to our servers.
-                We now use GPT-4o for maximum accuracy in resume analysis.
-              </p>
+              <div className="flex items-start gap-2 mt-2">
+                <Shield className="h-4 w-4 text-gray-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-gray-500">
+                  Your API key is stored locally in your browser and is never sent to our servers.
+                  We use the most capable GPT-4o model for maximum accuracy in resume analysis.
+                </p>
+              </div>
             </div>
             <Button 
               type="submit" 
@@ -100,13 +107,16 @@ const ApiKeySetup: React.FC<ApiKeySetupProps> = ({ onConfigured }) => {
           </div>
         </form>
       </CardContent>
-      <CardFooter className="flex-col items-start border-t pt-4">
+      <CardFooter className="flex-col items-start border-t pt-4 gap-3">
         <p className="text-xs text-gray-500">
           Don't have an OpenAI API key? <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" className="underline">Get one here</a>
         </p>
-        <p className="text-xs text-gray-500 mt-2">
-          Note: Using GPT-4o will provide more accurate analysis but may cost more than other models.
-        </p>
+        <div className="flex items-start gap-2 pb-1">
+          <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+          <p className="text-xs text-gray-600">
+            <span className="font-medium">Important:</span> Using GPT-4o provides the most accurate analysis but will cost more than other models. We recommend this for professional use cases where precision is critical.
+          </p>
+        </div>
       </CardFooter>
     </Card>
   );

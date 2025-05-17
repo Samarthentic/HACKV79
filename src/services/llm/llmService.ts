@@ -3,8 +3,9 @@ import { toast } from '@/hooks/use-toast';
 import { ParsedResume } from '../resume/types';
 import { JobMatch } from '../jobs/jobMatchingService';
 
-// Model configuration - using a more powerful model for accuracy
+// Model configuration - using the most accurate model available
 const MODEL = 'gpt-4o';
+const MAX_TOKENS = 4000; // Increased token limit for more thorough analysis
 
 /**
  * Service for handling interactions with Language Learning Models (LLMs)
@@ -73,31 +74,45 @@ export class LLMService {
   }
 
   /**
-   * Enhance resume extraction using LLM
+   * Enhance resume extraction using LLM with improved prompt engineering
    */
   public async enhanceResumeExtraction(resumeText: string, initialExtraction: Partial<ParsedResume>): Promise<Partial<ParsedResume>> {
     try {
       const prompt = `
-        You are a professional resume parser. 
-        I'll provide you with extracted text from a resume and initial parsed data.
-        Please analyze the text and improve or correct the extracted information.
+        You are an expert resume parser with deep knowledge of industry terminologies, job roles, and skills.
         
-        Resume Text:
-        ${resumeText.substring(0, 4000)} ${resumeText.length > 4000 ? '...(truncated)' : ''}
+        TASK: Analyze and enhance the extracted information from a resume.
         
-        Initial Extraction:
+        RESUME TEXT:
+        ${resumeText.substring(0, 6000)} ${resumeText.length > 6000 ? '...(truncated)' : ''}
+        
+        INITIAL EXTRACTION:
         ${JSON.stringify(initialExtraction, null, 2)}
         
-        Please provide improved data in valid JSON format only, no explanations.
+        INSTRUCTIONS:
+        1. Carefully analyze the full resume text
+        2. Identify and correct any errors in the initial extraction
+        3. Extract additional skills that might have been missed, especially implied skills
+        4. Standardize and categorize skills (technical, soft, domain-specific)
+        5. Ensure job titles and company names are correctly formatted
+        6. Normalize education data (degree names, institutions)
+        7. Add any certifications that were missed
+        8. Improve the description of experiences to highlight achievements
+        
+        Return ONLY valid JSON format that matches the structure of the initial extraction, with no explanation.
       `;
 
       const response = await this.makeRequest('/chat/completions', {
         model: MODEL,
         messages: [
-          { role: 'system', content: 'You are a helpful resume parsing assistant.' },
+          { 
+            role: 'system', 
+            content: 'You are a highly precise resume parsing assistant. Return only valid, well-structured JSON data.' 
+          },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.2
+        temperature: 0.1, // Lower temperature for more deterministic results
+        max_tokens: MAX_TOKENS
       });
 
       // Try to parse the response as JSON
@@ -118,7 +133,7 @@ export class LLMService {
   }
 
   /**
-   * Analyze job fitment with LLM
+   * Analyze job fitment with LLM using enhanced analysis techniques
    */
   public async analyzeJobFitment(resume: ParsedResume, jobMatches: JobMatch[]): Promise<{
     strengths: string[];
@@ -127,30 +142,44 @@ export class LLMService {
   }> {
     try {
       const prompt = `
-        You are a professional career advisor. Based on the resume and job matches below,
-        provide a comprehensive analysis including:
+        You are an expert career advisor and talent acquisition specialist with deep knowledge of industry requirements and job market trends.
         
-        1. Top strengths (list of strings)
-        2. Areas to improve (list of strings)
-        3. Resume red flags (list of objects with severity, issue, and impact properties)
+        TASK: Provide a detailed analysis of a candidate's resume against specific job matches.
         
-        Resume:
+        CANDIDATE RESUME:
         ${JSON.stringify(resume, null, 2)}
         
-        Job Matches:
+        JOB MATCHES (Top 3):
         ${JSON.stringify(jobMatches.slice(0, 3), null, 2)}
         
-        Provide the result as a JSON object with keys: strengths, areasToImprove, redFlags.
-        Only return valid JSON, no explanations.
+        INSTRUCTIONS:
+        1. Analyze the alignment between the resume and job matches with extreme precision
+        2. Identify specific strengths that make the candidate competitive
+        3. Pinpoint concrete areas where the candidate should improve to increase employability
+        4. Highlight potential red flags in the resume that might concern employers
+        5. Consider both technical fit and soft skills/cultural alignment
+        6. Base your analysis on current industry standards and expectations
+        7. Be specific, actionable, and thorough in your assessment
+        
+        FORMAT YOUR RESPONSE AS JSON with these keys:
+        - strengths: Array of specific strengths (8-12 items)
+        - areasToImprove: Array of specific improvement areas (5-8 items)
+        - redFlags: Array of objects with {severity: "high"|"medium"|"low", issue: "description", impact: "explanation"}
+        
+        Return ONLY valid JSON with no explanatory text.
       `;
 
       const response = await this.makeRequest('/chat/completions', {
         model: MODEL,
         messages: [
-          { role: 'system', content: 'You are a helpful career analysis assistant.' },
+          { 
+            role: 'system', 
+            content: 'You are a precision-focused career analysis assistant. Return only valid, detailed JSON data.' 
+          },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.2
+        temperature: 0.2,
+        max_tokens: MAX_TOKENS
       });
 
       try {
