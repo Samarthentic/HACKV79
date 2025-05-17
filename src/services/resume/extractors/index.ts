@@ -13,13 +13,15 @@ export {
   extractName,
   extractEmail,
   extractPhone,
-  extractLocation,
+  extractLocation
+} from './personalInfo';
+
+export {
   extractSkills
-} from './fieldExtractors';
+} from './skillsExtractor';
 
 export {
   extractEducation,
   extractExperience,
   extractCertifications
 } from './experienceExtractors';
-
