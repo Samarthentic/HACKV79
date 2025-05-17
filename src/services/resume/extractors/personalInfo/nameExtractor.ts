@@ -33,6 +33,9 @@ export const extractName = (text: string): string => {
     /^([A-Z][A-Z\s]+)$/m,  // All caps name
     // More aggressive pattern to find names anywhere in text
     /([A-Z][a-z]+(?:\s[A-Z][a-z]+){1,2})(?=\s*\n|$|\s*,)/m,  // Name followed by newline, comma or end
+    // Add more patterns for name extraction
+    /([A-Z][a-z]+(?:\s+[A-Z]\.?)(?:\s+[A-Z][a-z]+))/m, // First Middle Last or First M. Last
+    /([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})/m, // Simple First Last with more flexibility
   ];
   
   for (const pattern of namePatterns) {
@@ -59,6 +62,14 @@ export const extractName = (text: string): string => {
           words.every(word => /^[A-Z][a-z]+$/.test(word))) {
         return line;
       }
+    }
+  }
+  
+  // If we still don't have a name, try the first non-empty line that looks like a name
+  for (const line of lines) {
+    if (line.length > 3 && line.length < 40 && 
+        !line.match(/resume|cv|objective|summary|profile|about|education|experience|skills|contact|email|phone|address/i)) {
+      return line;
     }
   }
   

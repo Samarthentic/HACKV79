@@ -11,21 +11,25 @@ export const extractEducation = (text: string): Education[] => {
   const education: Education[] = [];
   const lines = text.split('\n');
   
-  // Look for education section
-  const educationRegex = /education|academic|university|college|school/i;
+  // Look for education section with more variations
+  const educationRegex = /education|academic|university|college|school|degree|qualification|training/i;
   let inEducationSection = false;
   let currentEntry: { degree: string, institution: string, year: string } | null = null;
   
-  // Education degree patterns
+  // Education degree patterns with more variations
   const degreePatterns = [
     /bachelor|master|phd|bs|ba|ms|ma|mba|doctorate|b\.s\.|m\.s\.|b\.a\.|m\.a\.|ph\.d\.|degree|diploma|certificate/i,
-    /associate|undergraduate|graduate|postgraduate|major|minor/i
+    /associate|undergraduate|graduate|postgraduate|major|minor|btech|mtech|bsc|msc|bed|med/i,
+    /computer science|engineering|business admin|administration|information technology|data science|artificial intelligence/i
   ];
   
-  // University/school patterns
+  // University/school patterns with more variations
   const institutionPatterns = [
-    /university|college|institute|school|academy/i
+    /university|college|institute|school|academy|faculty|department/i,
+    /polytech|community college|technical|vocational|professional/i
   ];
+  
+  const educationSectionEndRegex = /^(experience|work|employment|professional|skills|projects|certifications)/i;
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -37,8 +41,7 @@ export const extractEducation = (text: string): Education[] => {
     }
     
     // Check if we're leaving the education section
-    if (inEducationSection && line.length > 0 && 
-        /^(experience|work|employment|professional|skills|projects)/i.test(line)) {
+    if (inEducationSection && line.length > 0 && educationSectionEndRegex.test(line)) {
       inEducationSection = false;
       
       // Save any current entry before leaving section
@@ -50,15 +53,19 @@ export const extractEducation = (text: string): Education[] => {
     
     // Process lines in the education section
     if (inEducationSection && line.length > 0) {
+      // Skip the section header itself
+      if (line.match(/^education$/i)) continue;
+      
       // Look for institution names
       const isInstitution = institutionPatterns.some(pattern => pattern.test(line));
       
       // Look for degree information
       const isDegree = degreePatterns.some(pattern => pattern.test(line));
       
-      // Look for year
-      const yearRegex = /(19|20)\d{2}(-|–|to)?(19|20)?\d{0,2}/;
-      const yearMatch = line.match(yearRegex);
+      // Look for year with more variations
+      const yearRegex = /(19|20)\d{2}(-|–|to|-)?(19|20)?\d{0,2}/;
+      const graduatedRegex = /graduated:?\s*(19|20)\d{2}/i;
+      const yearMatch = line.match(yearRegex) || line.match(graduatedRegex);
       
       // If we find an institution, start a new entry
       if (isInstitution && (!currentEntry || currentEntry.institution)) {
@@ -121,6 +128,37 @@ export const extractEducation = (text: string): Education[] => {
           year: ''
         });
       });
+    }
+  }
+  
+  // If still no education found, try a more aggressive search
+  if (education.length === 0) {
+    // Look for lines that might contain education information
+    const potentialEducation = lines.filter(line => {
+      return degreePatterns.some(pattern => pattern.test(line)) || 
+             institutionPatterns.some(pattern => pattern.test(line));
+    });
+    
+    if (potentialEducation.length > 0) {
+      let degreeText = '';
+      let institutionText = '';
+      
+      for (const line of potentialEducation) {
+        if (degreePatterns.some(pattern => pattern.test(line)) && !degreeText) {
+          degreeText = line;
+        }
+        else if (institutionPatterns.some(pattern => pattern.test(line)) && !institutionText) {
+          institutionText = line;
+        }
+      }
+      
+      if (degreeText || institutionText) {
+        education.push({
+          degree: degreeText || 'Degree',
+          institution: institutionText || 'Institution',
+          year: ''
+        });
+      }
     }
   }
   

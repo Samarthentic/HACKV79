@@ -11,7 +11,8 @@ import {
   extractSkills,
   extractEducation,
   extractExperience,
-  extractCertifications
+  extractCertifications,
+  preprocessExtractedText
 } from './extractors';
 
 /**
@@ -30,13 +31,16 @@ export const parseResume = async (file: File): Promise<ParsedResume> => {
       setTimeout(async () => {
         try {
           // First, try to extract text from the file
-          const textContent = await extractTextFromFile(file);
+          const rawTextContent = await extractTextFromFile(file);
           
           // Check if we got enough text to parse
-          if (!textContent || textContent.length < 100) {
-            console.warn("Insufficient text extracted:", textContent);
+          if (!rawTextContent || rawTextContent.length < 100) {
+            console.warn("Insufficient text extracted:", rawTextContent);
             throw new Error("Could not extract sufficient text from the resume");
           }
+          
+          // Process the extracted text to improve quality
+          const textContent = preprocessExtractedText(rawTextContent);
           
           console.log(`Successfully extracted ${textContent.length} characters of text`);
           console.log("Text sample:", textContent.substring(0, 200) + "...");
@@ -57,6 +61,8 @@ export const parseResume = async (file: File): Promise<ParsedResume> => {
           
           console.log("Extracted personal info:", parsedResume.personalInfo);
           console.log("Extracted skills:", parsedResume.skills);
+          console.log("Extracted education:", parsedResume.education);
+          console.log("Extracted experience:", parsedResume.experience);
           
           // Validate the parsed data - if too many fields are empty, consider it a failed parse
           const emptyFields = [

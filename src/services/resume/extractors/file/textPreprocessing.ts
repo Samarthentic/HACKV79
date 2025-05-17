@@ -24,8 +24,8 @@ export const preprocessExtractedText = (text: string): string => {
     .replace(/(\n\s*)+/g, '\n')
     // Add newlines before likely section headers
     .replace(/([A-Z][A-Z\s]{3,}:)/g, '\n$1')
-    // Add newlines before common section headers
-    .replace(/\s+(EDUCATION|EXPERIENCE|SKILLS|WORK HISTORY|CERTIFICATIONS|ACHIEVEMENTS)(\s+|:)/gi, '\n$1$2');
+    // Add newlines before common section headers with more variations
+    .replace(/\s+(EDUCATION|EXPERIENCE|SKILLS|WORK HISTORY|CERTIFICATIONS|ACHIEVEMENTS|PROFESSIONAL SUMMARY|OBJECTIVE|QUALIFICATIONS|TRAINING|HONORS|AWARDS|PUBLICATIONS|LANGUAGES|INTERESTS|VOLUNTEER|AFFILIATIONS)(\s+|:)/gi, '\n$1$2');
   
   return processed;
 };

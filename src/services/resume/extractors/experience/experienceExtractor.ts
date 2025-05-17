@@ -11,8 +11,8 @@ export const extractExperience = (text: string): Experience[] => {
   const experience: Experience[] = [];
   const lines = text.split('\n');
   
-  // Look for experience section
-  const experienceRegex = /experience|work history|employment|professional experience|career/i;
+  // Look for experience section with multiple variations
+  const experienceRegex = /experience|work history|employment|professional experience|career|professional background|work experience|job history/i;
   let inExperienceSection = false;
   let currentEntry: { title: string, company: string, period: string, description: string } | null = null;
   let descriptionLines: string[] = [];
@@ -20,8 +20,11 @@ export const extractExperience = (text: string): Experience[] => {
   // Common job title patterns
   const jobTitlePatterns = [
     /(software|senior|junior|lead|principal|staff|chief|head|director|vp|vice president|manager|engineer|developer|analyst|consultant|specialist|coordinator|associate|assistant)/i,
-    /(designer|architect|administrator|technician|officer|executive|advisor|intern|trainee|contractor)/i
+    /(designer|architect|administrator|technician|officer|executive|advisor|intern|trainee|contractor)/i,
+    /(graphic|web|ui\/ux|product|project|program|marketing|sales|customer|data|business|financial|hr|human resources)/i
   ];
+  
+  const experienceSectionEndRegex = /^(education|academic|skills|projects|certifications|interests|activities|references|awards|honors|volunteer|additional)/i;
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -33,8 +36,7 @@ export const extractExperience = (text: string): Experience[] => {
     }
     
     // Check if we're leaving the experience section
-    if (inExperienceSection && line.length > 0 && 
-        /^(education|academic|skills|projects|certifications|interests|activities|references)/i.test(line)) {
+    if (inExperienceSection && line.length > 0 && experienceSectionEndRegex.test(line)) {
       // Save any current entry before leaving section
       if (currentEntry) {
         currentEntry.description = descriptionLines.join(' ');
@@ -50,12 +52,13 @@ export const extractExperience = (text: string): Experience[] => {
       // Look for job title patterns
       const isJobTitle = jobTitlePatterns.some(pattern => pattern.test(line));
       
-      // Look for year patterns
-      const yearRegex = /(19|20)\d{2}(-|–|to|-)?(present|current|now|(19|20)?\d{0,2})/i;
-      const yearMatch = line.match(yearRegex);
+      // Look for year patterns with more variations
+      const yearRegex = /(19|20)\d{2}(-|–|to|-)?(present|current|now|ongoing|(19|20)?\d{0,2})/i;
+      const monthYearRegex = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(19|20)\d{2}\s*(-|–|to|-)?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)?[a-z]*\s*((19|20)\d{2}|present|current|now|ongoing)?/i;
+      const yearMatch = line.match(yearRegex) || line.match(monthYearRegex);
       
       // If this line has a job title AND year, it's likely the start of a new entry
-      if (isJobTitle && yearMatch) {
+      if ((isJobTitle && yearMatch) || (line.length < 100 && yearMatch && i < lines.length - 1 && jobTitlePatterns.some(pattern => pattern.test(lines[i+1])))) {
         // Save previous entry if it exists
         if (currentEntry) {
           currentEntry.description = descriptionLines.join(' ');
@@ -65,9 +68,9 @@ export const extractExperience = (text: string): Experience[] => {
         
         // Create new entry
         currentEntry = {
-          title: line.replace(yearRegex, '').trim(),
+          title: yearMatch ? line.replace(yearMatch[0], '').trim() : line,
           company: '',
-          period: yearMatch[0],
+          period: yearMatch ? yearMatch[0] : '',
           description: ''
         };
       }
@@ -92,11 +95,13 @@ export const extractExperience = (text: string): Experience[] => {
       // Add to description
       else if (currentEntry) {
         // If line starts with bullet point, it's definitely part of description
-        if (line.match(/^[•\*\-\+]/)) {
+        if (line.match(/^[•\*\-\+\→\➢\◆\◇\►\⚫\⚪\○\●]/)) {
           descriptionLines.push(line);
         }
         // Check if this might be a company name that was missed
-        else if (currentEntry.company === '' && !line.match(/^\s+/) && line.length < 60) {
+        else if (currentEntry.company === '' && !line.match(/^\s+/) && line.length < 60 && 
+                !jobTitlePatterns.some(pattern => pattern.test(line)) &&
+                !line.match(/^(developed|created|managed|led|responsible|achievements)/i)) {
           currentEntry.company = line;
         }
         // Otherwise, add to description
@@ -129,9 +134,15 @@ export const extractExperience = (text: string): Experience[] => {
       entry.period = companyWithPeriod[0].replace(entry.company, '').trim();
     }
     
+    // If title is empty but we have a company, swap them (might be reversed)
+    if (entry.title === '' && entry.company !== '') {
+      entry.title = entry.company;
+      entry.company = '';
+    }
+    
     // Improve description formatting
     entry.description = entry.description
-      .replace(/\s*[•\*\-\+]\s*/g, '\n• ') // Format bullet points
+      .replace(/\s*[•\*\-\+\→\➢\◆\◇\►\⚫\⚪\○\●]\s*/g, '\n• ') // Format bullet points
       .replace(/\s{2,}/g, ' ') // Remove extra spaces
       .trim();
     
