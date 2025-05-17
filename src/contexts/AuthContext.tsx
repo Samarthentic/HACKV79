@@ -30,21 +30,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const isInitialized = useRef(false);
-  const authStateChangeHandled = useRef(false);
+  const initialized = useRef(false);
 
   useEffect(() => {
     let subscription: { unsubscribe: () => void } | null = null;
-    
+
     const initializeAuth = async () => {
       try {
-        // First set up the auth state listener to prevent race conditions
+        // First, set up auth state listener
         const { data } = supabase.auth.onAuthStateChange(
-          async (event, currentSession) => {
+          (event, currentSession) => {
             console.log("Auth state changed:", event);
-            
-            // Skip if not fully initialized yet or already handled to avoid duplicate events
-            if (!isInitialized.current) return;
             
             setSession(currentSession);
             setUser(currentSession?.user ?? null);
@@ -58,8 +54,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               setProfile(null);
             }
 
-            // Only show toast notifications once we're fully initialized
-            if (isInitialized.current) {
+            // Show toast notifications after initialization
+            if (initialized.current) {
               if (event === 'SIGNED_IN') {
                 toast({
                   title: "Signed in successfully",
@@ -72,14 +68,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 });
               }
             }
-            
-            authStateChangeHandled.current = true;
           }
         );
         
         subscription = data.subscription;
 
-        // Now get current session
+        // Then get the current session
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         if (currentSession?.user) {
@@ -88,11 +82,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           await fetchProfile(currentSession.user.id);
         }
         
-        // Mark as initialized only after we've set up everything
-        isInitialized.current = true;
+        initialized.current = true;
       } catch (error) {
         console.error("Error initializing auth:", error);
       } finally {
+        // Always set loading to false at the end
         setLoading(false);
       }
     };

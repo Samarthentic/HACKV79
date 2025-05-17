@@ -13,6 +13,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const handleUploadClick = () => {
+    console.log("Navigating to upload page");
     navigate('/upload');
   };
 

@@ -25,11 +25,9 @@ const UploadResume = () => {
   const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
   const fileExtensions = ['.pdf', '.docx'];
 
-  // Verify that the user is authenticated
+  // Check if user exists before proceeding
   useEffect(() => {
-    if (user) {
-      console.log("User authenticated in UploadResume:", user.id);
-    }
+    console.log("Current user in UploadResume:", user);
   }, [user]);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -85,16 +83,26 @@ const UploadResume = () => {
   };
 
   const handleUpload = async () => {
-    if (!file || !user) return;
+    if (!file || !user) {
+      toast({
+        title: "Error",
+        description: user ? "Please select a file" : "Authentication required",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
       setStatus('uploading');
       setUploadProgress(10);
       
+      // Create storage bucket if it doesn't exist (this is handled server-side)
       // Create a unique file path with user ID included
       const timestamp = Date.now();
       const fileExt = file.name.split('.').pop();
       const filePath = `resumes/${user.id}/${timestamp}-${file.name}`;
+      
+      console.log("Uploading file to path:", filePath);
       
       // Upload file to Supabase Storage
       const { error: uploadError, data } = await supabase.storage
@@ -104,7 +112,10 @@ const UploadResume = () => {
           upsert: false
         });
         
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
       
       setUploadProgress(50);
       
@@ -127,6 +138,8 @@ const UploadResume = () => {
       setUploadProgress(100);
       setStatus('success');
       
+      console.log("Upload successful, redirecting to processing page");
+      
       // Redirect to processing page
       setTimeout(() => {
         navigate('/processing');
@@ -140,6 +153,8 @@ const UploadResume = () => {
         description: "There was an error uploading your resume. Please try again.",
         variant: "destructive"
       });
+      // Reset progress
+      setUploadProgress(0);
     }
   };
 

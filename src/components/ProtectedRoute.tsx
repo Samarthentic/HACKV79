@@ -23,6 +23,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           description: "Please sign in to access this page.",
           variant: "destructive",
         });
+        console.log("User not authenticated, redirecting to signin");
       }
     }
   }, [loading, user, location.pathname, toast]);
@@ -35,6 +36,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       </div>
     );
   }
+  
+  console.log("ProtectedRoute - auth status:", { isAuthenticated: !!user, pathname: location.pathname });
   
   // Redirect to login if not authenticated
   if (!user) {

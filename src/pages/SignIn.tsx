@@ -26,9 +26,7 @@ const SignIn = () => {
     // If already logged in, redirect to the intended destination
     if (user) {
       console.log("User is already logged in, redirecting to:", from);
-      setTimeout(() => {
-        navigate(from);
-      }, 200); // Small delay to ensure the UI updates properly
+      navigate(from, { replace: true });
     }
   }, [user, navigate, from]);
 
@@ -37,9 +35,11 @@ const SignIn = () => {
     setIsLoading(true);
 
     try {
+      console.log("Attempting to sign in with:", email);
       const { error } = await signIn(email, password);
 
       if (error) {
+        console.error("Sign in error:", error);
         toast({
           title: "Sign in failed",
           description: error.message,
@@ -47,7 +47,7 @@ const SignIn = () => {
         });
       } else {
         console.log("Sign in successful, will redirect to:", from);
-        // The redirect will happen via the useEffect above
+        // Redirect will happen via the useEffect
       }
     } catch (err) {
       toast({
