@@ -26,7 +26,9 @@ const SignIn = () => {
     // If already logged in, redirect to the intended destination
     if (user) {
       console.log("User is already logged in, redirecting to:", from);
-      navigate(from);
+      setTimeout(() => {
+        navigate(from);
+      }, 100); // Small delay to ensure the UI updates properly
     }
   }, [user, navigate, from]);
 
