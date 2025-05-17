@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import * as React from 'react';
 import { Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -22,7 +22,7 @@ type EditDialogProps = {
 };
 
 const EditDialog = ({ title, content, onSave }: EditDialogProps) => {
-  const [editedContent, setEditedContent] = useState(content);
+  const [editedContent, setEditedContent] = React.useState(content);
   
   const handleSave = () => {
     onSave(editedContent);
