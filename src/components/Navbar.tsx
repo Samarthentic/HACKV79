@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Upload, ChartBar, LayoutDashboard, Menu, X } from 'lucide-react';
+import { Home, Upload, ChartBar, LayoutDashboard, Menu, X, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,14 +33,20 @@ const Navbar = () => {
   const navigationLinks = [
     { name: 'Home', path: '/', icon: Home },
     { name: 'Upload Resume', path: '/upload', icon: Upload },
-    { name: 'Resume Summary', path: '/resume-summary', icon: ChartBar },
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Job Fitment', path: '/job-fitment', icon: ChartBar },
+    ...(user ? [
+      { name: 'Resume Summary', path: '/resume-summary', icon: ChartBar },
+      { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+      { name: 'Job Fitment', path: '/job-fitment', icon: ChartBar },
+    ] : []),
   ];
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.includes(path);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   return (
@@ -72,11 +80,24 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center space-x-4">
-          <Button 
-            className="bg-talentsleuth hover:bg-talentsleuth-dark text-white"
-          >
-            Sign In
-          </Button>
+          {user ? (
+            <Button 
+              onClick={handleSignOut}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
+          ) : (
+            <Button 
+              className="bg-talentsleuth hover:bg-talentsleuth-dark text-white"
+              as={Link}
+              to="/auth"
+            >
+              Sign In
+            </Button>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -109,11 +130,24 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
-            <Button 
-              className="bg-talentsleuth hover:bg-talentsleuth-dark text-white w-full mt-2"
-            >
-              Sign In
-            </Button>
+            {user ? (
+              <Button 
+                onClick={handleSignOut}
+                variant="outline"
+                className="flex items-center gap-2 w-full"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            ) : (
+              <Button 
+                className="bg-talentsleuth hover:bg-talentsleuth-dark text-white w-full mt-2"
+                as={Link}
+                to="/auth"
+              >
+                Sign In
+              </Button>
+            )}
           </div>
         </div>
       )}
