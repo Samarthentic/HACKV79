@@ -5,12 +5,9 @@
 
 export { 
   extractTextFromFile, 
-  extractTextFromPDF, 
-  extractTextFromDOCX,
-  extractTextFromPlainText,
-  preprocessExtractedText,
-  getFileType 
-} from './fileExtractors';
+  getFileType,
+  preprocessExtractedText 
+} from './file';
 
 export {
   extractName,
@@ -25,3 +22,4 @@ export {
   extractExperience,
   extractCertifications
 } from './experienceExtractors';
+
