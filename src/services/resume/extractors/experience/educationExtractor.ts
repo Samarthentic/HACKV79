@@ -2,12 +2,13 @@
 /**
  * Extract education information from resume text
  */
+import { Education } from '../types';
 
 /**
  * Extract education information
  */
-export const extractEducation = (text: string): Array<{ degree: string, institution: string, year: string }> => {
-  const education: Array<{ degree: string, institution: string, year: string }> = [];
+export const extractEducation = (text: string): Education[] => {
+  const education: Education[] = [];
   const lines = text.split('\n');
   
   // Look for education section

@@ -1,12 +1,14 @@
+
 /**
  * Extract work experience information from resume text
  */
+import { Experience } from '../types';
 
 /**
  * Extract work experience
  */
-export const extractExperience = (text: string): Array<{ title: string, company: string, period: string, description: string }> => {
-  const experience: Array<{ title: string, company: string, period: string, description: string }> = [];
+export const extractExperience = (text: string): Experience[] => {
+  const experience: Experience[] = [];
   const lines = text.split('\n');
   
   // Look for experience section

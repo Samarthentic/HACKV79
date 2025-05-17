@@ -1,27 +1,12 @@
 
+// Import centralized type definitions
+import { PersonalInfo, Education, Experience, Certification } from './extractors/types';
+
 // Types for parsed resume data
 export interface ParsedResume {
-  personalInfo: {
-    name: string;
-    email: string;
-    phone: string;
-    location: string;
-  };
+  personalInfo: PersonalInfo;
   skills: string[];
-  education: Array<{
-    degree: string;
-    institution: string;
-    year: string;
-  }>;
-  experience: Array<{
-    title: string;
-    company: string;
-    period: string;
-    description: string;
-  }>;
-  certifications: Array<{
-    name: string;
-    issuer: string;
-    year: string;
-  }>;
+  education: Education[];
+  experience: Experience[];
+  certifications: Certification[];
 }

@@ -2,12 +2,13 @@
 /**
  * Extract certifications information from resume text
  */
+import { Certification } from '../types';
 
 /**
  * Extract certifications
  */
-export const extractCertifications = (text: string): Array<{ name: string, issuer: string, year: string }> => {
-  const certifications: Array<{ name: string, issuer: string, year: string }> = [];
+export const extractCertifications = (text: string): Certification[] => {
+  const certifications: Certification[] = [];
   const lines = text.split('\n');
   
   // Look for certifications section
