@@ -5,9 +5,17 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  redirectTo?: string;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+/**
+ * A component that protects routes requiring authentication
+ * If user is not authenticated, they will be redirected to the specified route
+ */
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+  children, 
+  redirectTo = "/signin" 
+}) => {
   const { user, loading } = useAuth();
   
   // Show loading state while checking authentication
@@ -21,7 +29,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   
   // Redirect to login if not authenticated
   if (!user) {
-    return <Navigate to="/signin" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
   
   // Render children if authenticated

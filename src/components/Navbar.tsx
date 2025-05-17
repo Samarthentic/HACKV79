@@ -37,14 +37,23 @@ const Navbar = () => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
-  // Navigation links with icons
-  const navigationLinks = [
+  // Navigation links with icons for all users (authenticated and non-authenticated)
+  const publicNavigationLinks = [
     { name: 'Home', path: '/', icon: Home },
     { name: 'Upload Resume', path: '/upload', icon: Upload },
     { name: 'Resume Summary', path: '/resume-summary', icon: ChartBar },
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Job Fitment', path: '/job-fitment', icon: ChartBar },
   ];
+
+  // Additional navigation links only for authenticated users
+  const authenticatedLinks = [
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  ];
+
+  // Choose which links to display based on authentication status
+  const navigationLinks = user 
+    ? [...publicNavigationLinks, ...authenticatedLinks]
+    : publicNavigationLinks;
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';

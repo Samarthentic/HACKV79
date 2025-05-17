@@ -35,26 +35,12 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/signup" element={<SignUp />} />
-              <Route path="/upload" element={
-                <ProtectedRoute>
-                  <UploadResume />
-                </ProtectedRoute>
-              } />
-              <Route path="/processing" element={
-                <ProtectedRoute>
-                  <ProcessingResume />
-                </ProtectedRoute>
-              } />
-              <Route path="/resume-summary" element={
-                <ProtectedRoute>
-                  <ResumeSummary />
-                </ProtectedRoute>
-              } />
-              <Route path="/job-fitment" element={
-                <ProtectedRoute>
-                  <JobFitment />
-                </ProtectedRoute>
-              } />
+              {/* Resume-related routes are now accessible without authentication */}
+              <Route path="/upload" element={<UploadResume />} />
+              <Route path="/processing" element={<ProcessingResume />} />
+              <Route path="/resume-summary" element={<ResumeSummary />} />
+              <Route path="/job-fitment" element={<JobFitment />} />
+              {/* Dashboard still requires authentication */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Dashboard />
