@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader } from 'lucide-react';
@@ -16,7 +17,7 @@ const ProcessingResume = () => {
   
   const processingSteps = [
     { name: "Analyzing Resume", duration: 5000 },
-    { name: "Scanning Public Profiles", duration: 10000 },
+    { name: "Extracting Information", duration: 10000 },
     { name: "Scoring Candidate", duration: 8000 }
   ];
   
@@ -59,7 +60,7 @@ const ProcessingResume = () => {
           // We've completed all steps, process the resume and redirect to results
           clearInterval(interval);
           
-          // Simulate parsing the resume
+          // Process the resume
           parseResume(file)
             .then(parsedData => {
               console.log("Resume parsed successfully:", parsedData);
@@ -80,10 +81,15 @@ const ProcessingResume = () => {
               console.error("Error processing resume:", error);
               toast({
                 title: "Error processing resume",
-                description: "There was an error processing your resume. Please try again.",
+                description: "There was an error processing your resume. You will be redirected to a template you can edit.",
                 variant: "destructive",
               });
-              navigate('/upload');
+              
+              // Even on error, try to continue to the resume summary page
+              // The parseResume function should have fallen back to a template
+              setTimeout(() => {
+                navigate('/resume-summary', { replace: true });
+              }, 1500);
             });
         }
       }
