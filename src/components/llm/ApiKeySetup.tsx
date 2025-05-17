@@ -68,7 +68,7 @@ const ApiKeySetup: React.FC<ApiKeySetupProps> = ({ onConfigured }) => {
       <CardHeader>
         <CardTitle>Configure AI Integration</CardTitle>
         <CardDescription>
-          Enter your OpenAI API key to enable enhanced resume analysis and job matching
+          Enter your OpenAI API key to enable enhanced resume analysis and job matching using GPT-4o
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -87,6 +87,7 @@ const ApiKeySetup: React.FC<ApiKeySetupProps> = ({ onConfigured }) => {
               />
               <p className="text-xs text-gray-500">
                 Your API key is stored locally in your browser and is never sent to our servers.
+                We now use GPT-4o for maximum accuracy in resume analysis.
               </p>
             </div>
             <Button 
@@ -102,6 +103,9 @@ const ApiKeySetup: React.FC<ApiKeySetupProps> = ({ onConfigured }) => {
       <CardFooter className="flex-col items-start border-t pt-4">
         <p className="text-xs text-gray-500">
           Don't have an OpenAI API key? <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" className="underline">Get one here</a>
+        </p>
+        <p className="text-xs text-gray-500 mt-2">
+          Note: Using GPT-4o will provide more accurate analysis but may cost more than other models.
         </p>
       </CardFooter>
     </Card>

@@ -3,8 +3,8 @@ import { toast } from '@/hooks/use-toast';
 import { ParsedResume } from '../resume/types';
 import { JobMatch } from '../jobs/jobMatchingService';
 
-// Model configuration - using a smaller model for efficiency
-const MODEL = 'gpt-4o-mini';
+// Model configuration - using a more powerful model for accuracy
+const MODEL = 'gpt-4o';
 
 /**
  * Service for handling interactions with Language Learning Models (LLMs)
