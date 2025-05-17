@@ -79,6 +79,12 @@ export const parseResume = async (file: File): Promise<ParsedResume> => {
             throw new Error("Failed to extract enough information from resume");
           }
           
+          // Post-process the data to ensure better quality
+          // Make sure skills are unique and properly formatted
+          parsedResume.skills = [...new Set(parsedResume.skills)].map(skill => 
+            skill.trim().replace(/\s+/g, ' ').replace(/^[a-z]/, c => c.toUpperCase())
+          );
+          
           // Log the parsed results
           console.log("Resume parsed successfully:", parsedResume);
           
