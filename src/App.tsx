@@ -15,7 +15,8 @@ import ResumeSummary from "./pages/ResumeSummary";
 import JobFitment from "./pages/JobFitment";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
-import Auth from "./pages/Auth";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
 
 // Import CSS
 import "./App.css";
@@ -24,15 +25,16 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
+    <TooltipProvider>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
           <div className="min-h-screen flex flex-col">
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
               <Route path="/upload" element={
                 <ProtectedRoute>
                   <UploadResume />
@@ -62,9 +64,9 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
-        </TooltipProvider>
+        </BrowserRouter>
       </AuthProvider>
-    </BrowserRouter>
+    </TooltipProvider>
   </QueryClientProvider>
 );
 

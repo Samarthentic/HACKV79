@@ -2,14 +2,22 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Upload, ChartBar, LayoutDashboard, Menu, X, LogOut } from 'lucide-react';
+import { Home, Upload, ChartBar, LayoutDashboard, Menu, X, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, signOut, profile } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,20 +41,14 @@ const Navbar = () => {
   const navigationLinks = [
     { name: 'Home', path: '/', icon: Home },
     { name: 'Upload Resume', path: '/upload', icon: Upload },
-    ...(user ? [
-      { name: 'Resume Summary', path: '/resume-summary', icon: ChartBar },
-      { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-      { name: 'Job Fitment', path: '/job-fitment', icon: ChartBar },
-    ] : []),
+    { name: 'Resume Summary', path: '/resume-summary', icon: ChartBar },
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Job Fitment', path: '/job-fitment', icon: ChartBar },
   ];
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.includes(path);
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
   };
 
   return (
@@ -81,22 +83,43 @@ const Navbar = () => {
 
         <div className="hidden md:flex items-center space-x-4">
           {user ? (
-            <Button 
-              onClick={handleSignOut}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  {profile?.email?.split('@')[0] || 'Account'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Link to="/dashboard" className="flex w-full">Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link to="/settings" className="flex w-full">Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="text-red-500 cursor-pointer flex items-center"
+                  onClick={() => signOut()}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
-            <Button 
-              className="bg-talentsleuth hover:bg-talentsleuth-dark text-white"
-              as={Link}
-              to="/auth"
-            >
-              Sign In
-            </Button>
+            <>
+              <Link to="/signin">
+                <Button variant="outline">Sign In</Button>
+              </Link>
+              <Link to="/signup">
+                <Button className="bg-talentsleuth hover:bg-talentsleuth-dark text-white">
+                  Sign Up
+                </Button>
+              </Link>
+            </>
           )}
         </div>
 
@@ -130,23 +153,32 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
+            
             {user ? (
-              <Button 
-                onClick={handleSignOut}
-                variant="outline"
-                className="flex items-center gap-2 w-full"
-              >
-                <LogOut className="h-4 w-4" />
-                Sign Out
-              </Button>
+              <div className="pt-2 border-t border-gray-100">
+                <div className="text-sm text-gray-500 mb-2">
+                  Signed in as: {profile?.email || user.email}
+                </div>
+                <Button 
+                  onClick={() => signOut()}
+                  variant="outline"
+                  className="w-full flex items-center justify-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              </div>
             ) : (
-              <Button 
-                className="bg-talentsleuth hover:bg-talentsleuth-dark text-white w-full mt-2"
-                as={Link}
-                to="/auth"
-              >
-                Sign In
-              </Button>
+              <div className="flex flex-col space-y-2 pt-2">
+                <Link to="/signin">
+                  <Button variant="outline" className="w-full">Sign In</Button>
+                </Link>
+                <Link to="/signup">
+                  <Button className="w-full bg-talentsleuth hover:bg-talentsleuth-dark text-white">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
             )}
           </div>
         </div>
