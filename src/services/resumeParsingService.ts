@@ -3,4 +3,3 @@
 export type { ParsedResume } from './resume/types';
 export { parseResume } from './resume/parseResume';
 export { saveResumeData, getResumeData } from './resume/storageService';
-export { extractTextFromPDF, extractTextFromDOCX, parseExtractedText } from './resume/extractors';
