@@ -1,24 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Upload, ChartBar, LayoutDashboard, Menu, X, LogOut, User } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Link, useLocation } from 'react-router-dom';
+import { Home, Upload, ChartBar, LayoutDashboard, Menu, X } from 'lucide-react';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, signOut, profile } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -52,16 +41,6 @@ const Navbar = () => {
     return location.pathname.includes(path);
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
-
-  // Fix links in dropdown menu to use React Router's navigate
-  const handleMenuItemClick = (path: string) => {
-    navigate(path);
-  };
-
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -93,45 +72,11 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center space-x-4">
-          {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  {profile?.email?.split('@')[0] || 'Account'}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => handleMenuItemClick('/dashboard')} className="cursor-pointer">
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleMenuItemClick('/settings')} className="cursor-pointer">
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  className="text-red-500 cursor-pointer flex items-center"
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <>
-              <Link to="/signin">
-                <Button variant="outline">Sign In</Button>
-              </Link>
-              <Link to="/signup">
-                <Button className="bg-talentsleuth hover:bg-talentsleuth-dark text-white">
-                  Sign Up
-                </Button>
-              </Link>
-            </>
-          )}
+          <Button 
+            className="bg-talentsleuth hover:bg-talentsleuth-dark text-white"
+          >
+            Sign In
+          </Button>
         </div>
 
         {/* Mobile Menu Button */}
@@ -164,33 +109,11 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
-            
-            {user ? (
-              <div className="pt-2 border-t border-gray-100">
-                <div className="text-sm text-gray-500 mb-2">
-                  Signed in as: {profile?.email || user.email}
-                </div>
-                <Button 
-                  onClick={handleSignOut}
-                  variant="outline"
-                  className="w-full flex items-center justify-center gap-2"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col space-y-2 pt-2">
-                <Link to="/signin">
-                  <Button variant="outline" className="w-full">Sign In</Button>
-                </Link>
-                <Link to="/signup">
-                  <Button className="w-full bg-talentsleuth hover:bg-talentsleuth-dark text-white">
-                    Sign Up
-                  </Button>
-                </Link>
-              </div>
-            )}
+            <Button 
+              className="bg-talentsleuth hover:bg-talentsleuth-dark text-white w-full mt-2"
+            >
+              Sign In
+            </Button>
           </div>
         </div>
       )}
