@@ -6,7 +6,8 @@
 export { 
   extractTextFromFile, 
   getFileType,
-  preprocessExtractedText 
+  preprocessExtractedText,
+  extractSections
 } from './file';
 
 export {

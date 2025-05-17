@@ -12,11 +12,12 @@ import {
   extractEducation,
   extractExperience,
   extractCertifications,
-  preprocessExtractedText
+  preprocessExtractedText,
+  extractSections
 } from './extractors';
 
 /**
- * Parse a resume file by extracting information using NLP techniques
+ * Parse a resume file by extracting information using enhanced NLP techniques
  * @param file The resume file to parse (PDF or DOCX)
  * @returns A promise that resolves to the parsed resume data
  */
@@ -42,21 +43,26 @@ export const parseResume = async (file: File): Promise<ParsedResume> => {
           // Process the extracted text to improve quality
           const textContent = preprocessExtractedText(rawTextContent);
           
+          // Extract sections to improve contextual understanding
+          const sections = extractSections(rawTextContent);
+          
           console.log(`Successfully extracted ${textContent.length} characters of text`);
           console.log("Text sample:", textContent.substring(0, 200) + "...");
+          console.log("Extracted sections:", Object.keys(sections).map(k => `${k}: ${sections[k].length} chars`));
           
           // Now try to parse the extracted text to get structured resume data
+          // Use the extracted sections to provide more context for each extraction
           const parsedResume: ParsedResume = {
             personalInfo: {
-              name: extractName(textContent),
-              email: extractEmail(textContent),
-              phone: extractPhone(textContent),
-              location: extractLocation(textContent)
+              name: extractName(sections.header || textContent),
+              email: extractEmail(sections.header || textContent),
+              phone: extractPhone(sections.header || textContent),
+              location: extractLocation(sections.header || textContent)
             },
-            skills: extractSkills(textContent),
-            education: extractEducation(textContent),
-            experience: extractExperience(textContent),
-            certifications: extractCertifications(textContent)
+            skills: extractSkills(sections.skills || textContent),
+            education: extractEducation(sections.education || textContent),
+            experience: extractExperience(sections.experience || textContent),
+            certifications: extractCertifications(sections.certifications || textContent)
           };
           
           console.log("Extracted personal info:", parsedResume.personalInfo);

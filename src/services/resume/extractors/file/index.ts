@@ -1,9 +1,7 @@
 
-/**
- * File extractors module
- * Export all file extraction utility functions
- */
-
-export { extractTextFromFile, getFileType } from './textExtraction';
-export { preprocessExtractedText } from './textPreprocessing';
-
+// Re-export all file extractors
+export * from './textExtraction';
+export * from './textPreprocessing';
+export * from './pdfExtractor';
+export * from './docxExtractor';
+export * from './plainTextExtractor';
