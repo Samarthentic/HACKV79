@@ -31,65 +31,78 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const isInitialized = useRef(false);
+  const authStateChangeHandled = useRef(false);
 
   useEffect(() => {
+    let subscription: { unsubscribe: () => void } | null = null;
+    
     const initializeAuth = async () => {
       try {
-        // Get the current session
+        // First set up the auth state listener to prevent race conditions
+        const { data } = supabase.auth.onAuthStateChange(
+          async (event, currentSession) => {
+            console.log("Auth state changed:", event);
+            
+            // Skip if not fully initialized yet or already handled to avoid duplicate events
+            if (!isInitialized.current) return;
+            
+            setSession(currentSession);
+            setUser(currentSession?.user ?? null);
+            
+            if (currentSession?.user) {
+              // Use setTimeout to prevent potential Supabase auth deadlocks
+              setTimeout(() => {
+                fetchProfile(currentSession.user.id);
+              }, 0);
+            } else {
+              setProfile(null);
+            }
+
+            // Only show toast notifications once we're fully initialized
+            if (isInitialized.current) {
+              if (event === 'SIGNED_IN') {
+                toast({
+                  title: "Signed in successfully",
+                  description: "Welcome back!",
+                });
+              } else if (event === 'SIGNED_OUT') {
+                toast({
+                  title: "Signed out",
+                  description: "You have been signed out.",
+                });
+              }
+            }
+            
+            authStateChangeHandled.current = true;
+          }
+        );
+        
+        subscription = data.subscription;
+
+        // Now get current session
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         if (currentSession?.user) {
           setSession(currentSession);
           setUser(currentSession.user);
-          fetchProfile(currentSession.user.id);
+          await fetchProfile(currentSession.user.id);
         }
+        
+        // Mark as initialized only after we've set up everything
+        isInitialized.current = true;
       } catch (error) {
-        console.error("Error getting session:", error);
+        console.error("Error initializing auth:", error);
       } finally {
         setLoading(false);
-        isInitialized.current = true;
       }
     };
-
-    // Set up the auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
-        // Skip if not fully initialized yet to avoid duplicate events
-        if (!isInitialized.current) return;
-        
-        console.log("Auth state changed:", event);
-        
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        
-        if (currentSession?.user) {
-          // Use setTimeout to prevent potential Supabase auth deadlocks
-          setTimeout(() => {
-            fetchProfile(currentSession.user.id);
-          }, 0);
-        } else {
-          setProfile(null);
-        }
-
-        // Show toast notifications for auth events
-        if (event === 'SIGNED_IN') {
-          toast({
-            title: "Signed in successfully",
-            description: "Welcome back!",
-          });
-        } else if (event === 'SIGNED_OUT') {
-          toast({
-            title: "Signed out",
-            description: "You have been signed out.",
-          });
-        }
-      }
-    );
 
     initializeAuth();
 
     return () => {
-      subscription.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
   }, []);
 
