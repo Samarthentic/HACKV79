@@ -34,10 +34,12 @@ export const parseResume = async (file: File): Promise<ParsedResume> => {
           
           // Check if we got enough text to parse
           if (!textContent || textContent.length < 100) {
+            console.warn("Insufficient text extracted:", textContent);
             throw new Error("Could not extract sufficient text from the resume");
           }
           
           console.log(`Successfully extracted ${textContent.length} characters of text`);
+          console.log("Text sample:", textContent.substring(0, 200) + "...");
           
           // Now try to parse the extracted text to get structured resume data
           const parsedResume: ParsedResume = {
@@ -53,15 +55,22 @@ export const parseResume = async (file: File): Promise<ParsedResume> => {
             certifications: extractCertifications(textContent)
           };
           
-          // Validate the parsed data to make sure we got reasonable results
-          if (!parsedResume.personalInfo.name || parsedResume.personalInfo.name === 'Unknown Name') {
-            console.warn("Could not extract name, using fallback name");
-            parsedResume.personalInfo.name = "John Doe";
-          }
+          console.log("Extracted personal info:", parsedResume.personalInfo);
+          console.log("Extracted skills:", parsedResume.skills);
           
-          if (parsedResume.skills.length === 0) {
-            console.warn("Could not extract skills, using fallback skills");
-            parsedResume.skills = ["Javascript", "React", "HTML", "CSS"];
+          // Validate the parsed data - if too many fields are empty, consider it a failed parse
+          const emptyFields = [
+            !parsedResume.personalInfo.name || parsedResume.personalInfo.name === 'Unknown Name',
+            !parsedResume.personalInfo.email,
+            !parsedResume.personalInfo.phone,
+            parsedResume.skills.length === 0,
+            parsedResume.education.length === 0,
+            parsedResume.experience.length === 0
+          ].filter(Boolean).length;
+          
+          if (emptyFields >= 4) {
+            console.warn("Too many empty fields, considering parse failed");
+            throw new Error("Failed to extract enough information from resume");
           }
           
           // Log the parsed results

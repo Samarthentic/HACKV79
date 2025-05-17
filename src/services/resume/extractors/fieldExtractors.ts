@@ -1,4 +1,3 @@
-
 /**
  * Field extractors for resume data
  * These functions extract specific pieces of information from resume text
@@ -32,6 +31,8 @@ export const extractName = (text: string): string => {
     /^([A-Z][a-z]+(?: [A-Z][a-z]+){1,2})$/m,  // Capitalized first and last name
     /name:?\s+([A-Z][a-z]+(?: [A-Z][a-z]+){1,2})/i,  // "Name:" followed by name
     /^([A-Z][A-Z\s]+)$/m,  // All caps name
+    // More aggressive pattern to find names anywhere in text
+    /([A-Z][a-z]+(?:\s[A-Z][a-z]+){1,2})(?=\s*\n|$|\s*,)/m,  // Name followed by newline, comma or end
   ];
   
   for (const pattern of namePatterns) {
@@ -40,6 +41,24 @@ export const extractName = (text: string): string => {
       // Normalize case (if all uppercase)
       const name = match[1].replace(/([A-Z])([A-Z]+)/g, (_, first, rest) => first + rest.toLowerCase());
       return name.trim();
+    }
+  }
+  
+  // Approach 3: Try to find contact info section and extract name
+  const contactSectionPattern = /contact information|personal details|personal information/i;
+  const contactSection = text.split('\n').findIndex(line => contactSectionPattern.test(line));
+  
+  if (contactSection !== -1) {
+    // Check next few lines for a name
+    for (let i = contactSection + 1; i < Math.min(contactSection + 5, lines.length); i++) {
+      const line = lines[i].trim();
+      const words = line.split(/\s+/);
+      
+      // Check for name pattern (2-3 words, properly capitalized)
+      if (words.length >= 2 && words.length <= 3 && 
+          words.every(word => /^[A-Z][a-z]+$/.test(word))) {
+        return line;
+      }
     }
   }
   
@@ -56,6 +75,7 @@ export const extractEmail = (text: string): string => {
     /email:?\s*([\w.+-]+@[\w-]+\.[\w.-]+)/gi,  // "Email:" followed by email
     /e-mail:?\s*([\w.+-]+@[\w-]+\.[\w.-]+)/gi,  // "E-mail:" followed by email
     /mail:?\s*([\w.+-]+@[\w-]+\.[\w.-]+)/gi,  // "Mail:" followed by email
+    /([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})/gi, // Another email pattern
   ];
   
   for (const pattern of emailPatterns) {
@@ -87,6 +107,8 @@ export const extractPhone = (text: string): string => {
     /mobile:?\s*(\+?1[-\s]?)?(\(?\d{3}\)?[-\s]?)?\d{3}[-\s]?\d{4}/gi,  // "Mobile:" followed by phone
     /cell:?\s*(\+?1[-\s]?)?(\(?\d{3}\)?[-\s]?)?\d{3}[-\s]?\d{4}/gi,  // "Cell:" followed by phone
     /tel:?\s*(\+?1[-\s]?)?(\(?\d{3}\)?[-\s]?)?\d{3}[-\s]?\d{4}/gi,  // "Tel:" followed by phone
+    // International formats
+    /\+\d{1,3}[\s-]?\d{1,3}[\s-]?\d{3,5}[\s-]?\d{3,5}/g, // International format with country code
   ];
   
   for (const pattern of phonePatterns) {
@@ -103,7 +125,7 @@ export const extractPhone = (text: string): string => {
         return phone.replace(/1(\d{3})(\d{3})(\d{4})/, '+1 $1-$2-$3');
       }
       
-      return matches[0];
+      return matches[0].trim();
     }
   }
   
@@ -158,6 +180,16 @@ export const extractLocation = (text: string): string => {
     }
   }
   
+  // Look for single city name with proper capitalization near contact info
+  const contactLines = text.split('\n').slice(0, 20);  // Check first 20 lines
+  for (const line of contactLines) {
+    // Look for standalone city names (capitalized words)
+    if (/^[A-Z][a-z]+(?:[\s-][A-Z][a-z]+)*$/.test(line.trim()) && 
+        !line.trim().match(/resume|cv|name|education|experience|skills/i)) {
+      return line.trim();
+    }
+  }
+  
   return '';
 };
 
@@ -167,36 +199,81 @@ export const extractLocation = (text: string): string => {
 export const extractSkills = (text: string): string[] => {
   // Extended list of common technical and soft skills
   const commonSkills = [
-    // Technical skills
+    // Programming Languages
     'javascript', 'typescript', 'python', 'java', 'c++', 'c#', 'ruby', 'php', 'go', 'rust',
-    'html', 'css', 'react', 'angular', 'vue', 'svelte', 'node', 'express', 'django', 'flask', 
-    'spring', 'laravel', 'rails', 'tailwind', 'bootstrap', 'jquery', 'json', 'rest api',
-    'graphql', 'ajax', 'xml', 'soap', 'sass', 'less', 'webpack', 'vite', 'parcel', 'babel',
-    'next.js', 'gatsby', 'nuxt', 'flutter', 'react native', 'swift', 'kotlin', 'android',
-    'ios', 'mobile development', 'responsive design', 'web development', 'aws', 'azure', 
-    'gcp', 'docker', 'kubernetes', 'terraform', 'jenkins', 'circleci', 'github actions',
-    'ci/cd', 'git', 'github', 'gitlab', 'bitbucket', 'jira', 'confluence', 'trello', 'asana',
-    'mongodb', 'mysql', 'postgresql', 'redis', 'elasticsearch', 'sql', 'nosql', 'oracle',
-    'database', 'data modeling', 'data analysis', 'data visualization', 'power bi',
-    'tableau', 'd3.js', 'machine learning', 'deep learning', 'artificial intelligence', 
-    'data science', 'big data', 'hadoop', 'spark', 'kafka', 'etl', 'r', 'matlab', 'numpy',
-    'pandas', 'scikit-learn', 'tensorflow', 'pytorch', 'nlp', 'computer vision',
+    'scala', 'kotlin', 'swift', 'objective-c', 'perl', 'shell', 'bash', 'powershell', 'r',
+    'matlab', 'groovy', 'lua', 'haskell', 'clojure', 'erlang', 'dart', 'fortran',
     
-    // Cloud platforms and DevOps
-    'aws', 'ec2', 's3', 'lambda', 'azure', 'gcp', 'heroku', 'netlify', 'vercel', 
-    'digital ocean', 'devops', 'ci/cd', 'jenkins', 'travis ci', 'github actions',
-    'docker', 'kubernetes', 'containerization', 'infrastructure as code', 'terraform',
-    'ansible', 'puppet', 'chef', 'serverless', 'microservices', 'monitoring', 'logging',
+    // Web Technologies
+    'html', 'css', 'html5', 'css3', 'sass', 'less', 'bootstrap', 'tailwind', 'material-ui',
+    'jquery', 'ajax', 'json', 'xml', 'rest api', 'soap', 'graphql', 'websockets', 'pwa',
+    'web components', 'responsive design', 'cross-browser compatibility',
     
-    // Soft skills
-    'leadership', 'management', 'team management', 'project management', 'agile', 'scrum', 
-    'kanban', 'waterfall', 'critical thinking', 'problem solving', 'decision making',
-    'communication', 'teamwork', 'collaboration', 'time management', 'organization', 
-    'adaptability', 'flexibility', 'creativity', 'innovation', 'analytical skills',
-    'research', 'presentation', 'public speaking', 'negotiation', 'conflict resolution',
-    'customer service', 'interpersonal skills', 'emotional intelligence', 'mentoring',
-    'training', 'coaching', 'strategic planning', 'budget management', 'resource allocation',
-    'risk management', 'quality assurance', 'process improvement', 'business analysis'
+    // Frontend Frameworks
+    'react', 'angular', 'vue', 'svelte', 'next.js', 'gatsby', 'nuxt', 'ember', 'backbone',
+    'redux', 'mobx', 'vuex', 'recoil', 'jotai', 'zustand', 'webpack', 'vite', 'parcel', 
+    'rollup', 'babel', 'eslint', 'prettier', 'stylelint',
+    
+    // Backend Technologies
+    'node', 'express', 'nest.js', 'django', 'flask', 'fastapi', 'spring', 'spring boot',
+    'rails', 'laravel', 'symfony', 'asp.net', 'flask', 'fastapi', 'gin', 'echo', 'koa',
+    'hapi', 'sails.js', 'meteor', 'feathers', 'adonis', 'loopback',
+    
+    // Mobile Development
+    'react native', 'flutter', 'ionic', 'cordova', 'xamarin', 'android', 'ios', 'swift ui',
+    'kotlin multiplatform', 'mobile development', 'responsive design', 'pwa', 'capacitor',
+    'native script', 'app development',
+    
+    // Database Technologies
+    'sql', 'mysql', 'postgresql', 'oracle', 'sqlite', 'mongodb', 'cassandra', 'redis',
+    'dynamodb', 'couchbase', 'firebase', 'supabase', 'neo4j', 'graphdb', 'elasticsearch',
+    'solr', 'database design', 'data modeling', 'orm', 'sql server', 'nosql',
+    
+    // Cloud & DevOps
+    'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins', 'github actions', 'gitlab ci',
+    'circleci', 'travis ci', 'terraform', 'ansible', 'puppet', 'chef', 'ci/cd', 'devops',
+    'infrastructure as code', 'cloud architecture', 'serverless', 'lambda', 'ec2', 's3',
+    'rds', 'dynamo', 'cloudfront', 'route53', 'cloudwatch', 'azure functions', 'digital ocean',
+    'heroku', 'netlify', 'vercel', 'cloudflare', 'nginx', 'apache', 'load balancing',
+    
+    // Data Science & AI
+    'machine learning', 'deep learning', 'artificial intelligence', 'data science', 'tensorflow',
+    'pytorch', 'keras', 'scikit-learn', 'pandas', 'numpy', 'scipy', 'matplotlib', 'seaborn',
+    'jupyter', 'data visualization', 'statistical analysis', 'computer vision', 'nlp',
+    'natural language processing', 'big data', 'hadoop', 'spark', 'data mining', 'data analysis',
+    'data engineering', 'etl', 'tableau', 'power bi', 'd3.js', 'data warehousing', 'olap',
+    
+    // Soft Skills & Methodologies
+    'agile', 'scrum', 'kanban', 'waterfall', 'lean', 'tdd', 'bdd', 'ddd', 'solid principles',
+    'design patterns', 'oop', 'functional programming', 'microservices', 'soa', 'rest',
+    'leadership', 'project management', 'team management', 'problem solving', 'critical thinking',
+    'communication', 'teamwork', 'time management', 'strategic planning', 'presentation skills',
+    'public speaking', 'negotiation', 'conflict resolution', 'mentoring', 'coaching', 'training',
+    'analytical skills', 'research', 'customer service', 'client relations', 'stakeholder management',
+    'risk management', 'quality assurance', 'process improvement', 'business analysis',
+    
+    // Security
+    'cybersecurity', 'network security', 'information security', 'security testing', 'penetration testing',
+    'ethical hacking', 'security auditing', 'encryption', 'authentication', 'authorization', 'oauth',
+    'jwt', 'csrf', 'xss', 'sql injection', 'security best practices', 'compliance', 'gdpr',
+    'security architecture', 'identity management', 'sso', 'saml', 'firewall', 'vpn', 'ips',
+    
+    // Testing
+    'unit testing', 'integration testing', 'e2e testing', 'functional testing', 'regression testing',
+    'performance testing', 'load testing', 'stress testing', 'test automation', 'jest', 'mocha',
+    'jasmine', 'cypress', 'selenium', 'puppeteer', 'playwright', 'junit', 'testng', 'pytest',
+    'robotframework', 'qunit', 'test-driven development', 'behavior-driven development',
+    'manual testing', 'test planning', 'test strategy', 'test cases', 'test scripts',
+    
+    // Version Control & Collaboration
+    'git', 'github', 'gitlab', 'bitbucket', 'svn', 'mercurial', 'jira', 'confluence', 'trello',
+    'asana', 'basecamp', 'notion', 'slack', 'microsoft teams', 'zoom', 'agile methodologies',
+    'scrum', 'kanban', 'code review', 'pair programming', 'documentation',
+    
+    // Other Technical Skills
+    'restful apis', 'microservices', 'soa', 'soap', 'web services', 'system design',
+    'architecture', 'api design', 'ui/ux design', 'accessibility', 'localization',
+    'internationalization', 'seo', 'performance optimization',
   ];
   
   const foundSkills = new Set<string>();
@@ -263,6 +340,27 @@ export const extractSkills = (text: string): string[] => {
       });
     }
   }
+  
+  // Extract skills from bullet points in experience sections
+  const bulletPointPatterns = [
+    /[•·\-\*]\s*([\w\s]+)/g,  // Bullet points followed by text
+    /\d+\.\s*([\w\s]+)/g,     // Numbered lists
+  ];
+  
+  bulletPointPatterns.forEach(pattern => {
+    const matches = Array.from(text.matchAll(pattern));
+    matches.forEach(match => {
+      if (match[1]) {
+        const bulletText = match[1].toLowerCase();
+        commonSkills.forEach(skill => {
+          if (bulletText.includes(skill)) {
+            const capitalizedSkill = skill.charAt(0).toUpperCase() + skill.slice(1);
+            foundSkills.add(capitalizedSkill);
+          }
+        });
+      }
+    });
+  });
   
   return Array.from(foundSkills);
 };

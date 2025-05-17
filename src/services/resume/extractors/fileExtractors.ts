@@ -34,38 +34,47 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
  */
 export const extractTextFromPDF = async (file: File): Promise<string> => {
   try {
-    // This is a simplified approach that works with text-based PDFs
+    // Advanced PDF text extraction using ArrayBuffer and pattern matching
     const arrayBuffer = await file.arrayBuffer();
     const textDecoder = new TextDecoder('utf-8');
     const content = textDecoder.decode(arrayBuffer);
     
-    // Enhanced text extraction for PDFs
+    // Enhanced PDF text extraction with multiple patterns
     let extractedText = '';
     
-    // Try multiple pattern approaches for better coverage
-    // Look for text content between common PDF text markers
-    const textMarkerPatterns = [
-      /\(\(([^\)]+)\)\)/g,          // Common text marker pattern
+    // Multiple pattern approaches for better text extraction coverage
+    const patterns = [
+      // PDF text object markers
+      /\(\(([^\)]+)\)\)/g,          // Common text pattern
       /\(([^\(\)]{2,})\)/g,         // Text in parentheses
       /\/Text[^\/]*\/([^\/\[]+)/g,  // Text after /Text marker
-      /<text[^>]*>(.*?)<\/text>/gi, // XML-like text tags (some PDFs)
+      /<text[^>]*>(.*?)<\/text>/gi, // XML-like text tags
+      
+      // Object streams (extract readable content)
+      /stream\s([\s\S]*?)\sendstream/g,
+      
+      // Content streams
+      /BT\s([\s\S]*?)\sET/g,        // Text blocks
+      
+      // Font references and content
+      /\/F\d+\s+\d+\s+Tf\s*([\(\)]*.*?)[><\]]/g
     ];
     
-    for (const pattern of textMarkerPatterns) {
+    // Try all patterns to maximize text extraction
+    for (const pattern of patterns) {
       const matches = content.match(pattern) || [];
-      if (matches.length > 0) {
-        matches.forEach(match => {
-          const cleaned = match.replace(/\(\(|\)\)|\(|\)|\/Text|<text[^>]*>|<\/text>/gi, '');
-          if (cleaned.trim()) extractedText += cleaned + ' ';
-        });
-      }
+      matches.forEach(match => {
+        // Clean up pattern-specific markers
+        const cleaned = match.replace(/\(\(|\)\)|\(|\)|\/Text|<text[^>]*>|<\/text>|stream|endstream|BT|ET|\/F\d+\s+\d+\s+Tf/gi, '');
+        if (cleaned.trim()) extractedText += cleaned + ' ';
+      });
     }
     
-    // If pattern-based extraction didn't yield enough text, try character filtering
+    // If patterns didn't work well, try general content filtering
     if (extractedText.trim().length < 100) {
       // Get readable text by filtering for printable ASCII characters
       extractedText = content
-        .replace(/[^\x20-\x7E\n]/g, ' ') // Keep newlines for structure
+        .replace(/[^\x20-\x7E\n]/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
     }
@@ -87,10 +96,12 @@ export const extractTextFromPDF = async (file: File): Promise<string> => {
 export const extractTextFromDOCX = async (file: File): Promise<string> => {
   try {
     const arrayBuffer = await file.arrayBuffer();
-    const content = await extractTextFromDocxBuffer(arrayBuffer);
+    
+    // Improved DOCX extraction with better XML pattern matching
+    const textContent = await extractTextFromDocxBuffer(arrayBuffer);
     
     // Process extracted text to improve quality
-    const processedText = preprocessExtractedText(content);
+    const processedText = preprocessExtractedText(textContent);
     
     console.log(`Extracted ${processedText.length} characters from DOCX`);
     return processedText;
@@ -101,7 +112,7 @@ export const extractTextFromDOCX = async (file: File): Promise<string> => {
 };
 
 /**
- * New function to extract text from plain text files (TXT, RTF)
+ * Extract text from plain text files (TXT, RTF)
  */
 export const extractTextFromPlainText = async (file: File): Promise<string> => {
   try {
@@ -119,17 +130,27 @@ export const extractTextFromPlainText = async (file: File): Promise<string> => {
  * Preprocess extracted text to improve quality and consistency
  */
 export const preprocessExtractedText = (text: string): string => {
-  return text
+  let processed = text
     // Normalize whitespace
     .replace(/\s+/g, ' ')
-    // Fix common OCR/extraction errors
+    // Fix common extraction errors
     .replace(/['']/g, "'")
     .replace(/[""]/g, '"')
     .replace(/–/g, '-')
-    // Break text into sections based on newlines for better section detection
-    .replace(/([.!?])\s+([A-Z])/g, '$1\n$2')
-    .replace(/(\n\s*)+/g, '\n')
     .trim();
+    
+  // Improve section detection by adding newlines
+  processed = processed
+    // Add newlines after periods followed by capital letters (likely new sentences)
+    .replace(/([.!?])\s+([A-Z])/g, '$1\n$2')
+    // Replace multiple newlines with a single one
+    .replace(/(\n\s*)+/g, '\n')
+    // Add newlines before likely section headers
+    .replace(/([A-Z][A-Z\s]{3,}:)/g, '\n$1')
+    // Add newlines before common section headers
+    .replace(/\s+(EDUCATION|EXPERIENCE|SKILLS|WORK HISTORY|CERTIFICATIONS|ACHIEVEMENTS)(\s+|:)/gi, '\n$1$2');
+  
+  return processed;
 };
 
 /**
@@ -154,6 +175,11 @@ const extractTextFromDocxBuffer = async (buffer: ArrayBuffer): Promise<string> =
     {
       paragraph: /<p\s[^>]*>.*?<\/p>/g,
       textRun: /<t[^>]*>(.*?)<\/t>/g
+    },
+    // More generic pattern
+    {
+      paragraph: /<para[^>]*>.*?<\/para>/g,
+      textRun: /<text[^>]*>(.*?)<\/text>/g
     }
   ];
   
@@ -187,7 +213,6 @@ const extractTextFromDocxBuffer = async (buffer: ArrayBuffer): Promise<string> =
 
 /**
  * Determine file type based on extension and mime type
- * Enhanced to support more file formats
  */
 export const getFileType = (file: File): string => {
   const fileName = file.name.toLowerCase();
