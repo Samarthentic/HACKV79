@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Upload, ChartBar, LayoutDashboard, Menu, X, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -17,6 +17,7 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, signOut, profile } = useAuth();
 
   useEffect(() => {
@@ -49,6 +50,16 @@ const Navbar = () => {
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.includes(path);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  // Fix links in dropdown menu to use React Router's navigate
+  const handleMenuItemClick = (path: string) => {
+    navigate(path);
   };
 
   return (
@@ -93,16 +104,16 @@ const Navbar = () => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Link to="/dashboard" className="flex w-full">Profile</Link>
+                <DropdownMenuItem onClick={() => handleMenuItemClick('/dashboard')} className="cursor-pointer">
+                  Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link to="/settings" className="flex w-full">Settings</Link>
+                <DropdownMenuItem onClick={() => handleMenuItemClick('/settings')} className="cursor-pointer">
+                  Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="text-red-500 cursor-pointer flex items-center"
-                  onClick={() => signOut()}
+                  onClick={handleSignOut}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
@@ -160,7 +171,7 @@ const Navbar = () => {
                   Signed in as: {profile?.email || user.email}
                 </div>
                 <Button 
-                  onClick={() => signOut()}
+                  onClick={handleSignOut}
                   variant="outline"
                   className="w-full flex items-center justify-center gap-2"
                 >

@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,12 +18,16 @@ const SignIn = () => {
   const { signIn, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the redirect path from state, defaulting to dashboard
+  const from = location.state?.from || "/dashboard";
 
   useEffect(() => {
     if (user) {
-      navigate("/dashboard");
+      navigate(from);
     }
-  }, [user, navigate]);
+  }, [user, navigate, from]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +43,8 @@ const SignIn = () => {
           variant: "destructive",
         });
       } else {
-        navigate("/dashboard");
+        // Navigate to the page the user was trying to access or dashboard
+        navigate(from);
       }
     } catch (err) {
       toast({

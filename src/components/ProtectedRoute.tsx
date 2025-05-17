@@ -1,7 +1,8 @@
 
-import React from "react";
-import { Navigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,6 +10,19 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    // Show toast only when user is not authenticated and not on initial load
+    if (!loading && !user && location.pathname !== '/signin' && location.pathname !== '/signup') {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to access this page.",
+        variant: "destructive",
+      });
+    }
+  }, [user, loading, location.pathname]);
   
   // Show loading state while checking authentication
   if (loading) {
@@ -21,7 +35,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   
   // Redirect to login if not authenticated
   if (!user) {
-    return <Navigate to="/signin" replace />;
+    // Use state to remember where the user was trying to go
+    return <Navigate to="/signin" state={{ from: location.pathname }} replace />;
   }
   
   // Render children if authenticated

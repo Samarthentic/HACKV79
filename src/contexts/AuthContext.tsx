@@ -47,13 +47,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setProfile(null);
         }
 
-        // Handle auth events
-        if (event === 'SIGNED_IN') {
+        // Handle auth events but don't show redundant toasts
+        if (event === 'SIGNED_IN' && !session) {
           toast({
             title: "Signed in successfully",
             description: "Welcome back!",
           });
-        } else if (event === 'SIGNED_OUT') {
+        } else if (event === 'SIGNED_OUT' && session) {
           toast({
             title: "Signed out",
             description: "You have been signed out.",
@@ -77,7 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       subscription.unsubscribe();
     };
-  }, [toast]);
+  }, []);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -129,6 +129,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       await supabase.auth.signOut();
     } catch (error) {
       console.error("Error signing out:", error);
+      toast({
+        title: "Error signing out",
+        description: "Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
