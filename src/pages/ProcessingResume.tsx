@@ -63,14 +63,19 @@ const ProcessingResume = () => {
           // Simulate parsing the resume
           parseResume(file)
             .then(parsedData => {
+              console.log("Resume parsed successfully:", parsedData);
               // Save the parsed data
               return saveResumeData(parsedData);
             })
             .then(() => {
               // Add a console log to debug the navigation
               console.log("Resume processing complete, navigating to resume-summary");
-              // Navigate to the resume summary page with replace: true to prevent back navigation to processing
-              navigate('/resume-summary', { replace: true });
+              
+              // Important: Use setTimeout to ensure the state is properly saved before navigation
+              setTimeout(() => {
+                // Navigate to the resume summary page with replace: true to prevent back navigation to processing
+                navigate('/resume-summary', { replace: true });
+              }, 500);
             })
             .catch(error => {
               console.error("Error processing resume:", error);

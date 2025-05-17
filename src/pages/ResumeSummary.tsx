@@ -23,19 +23,26 @@ const ResumeSummary = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("ResumeSummary: Attempting to fetch resume data");
     // Fetch the resume data when the component mounts
     const fetchResumeData = async () => {
       try {
         const data = await getResumeData();
+        console.log("Resume data fetched:", data);
         if (data) {
           setResumeData(data);
+          toast({
+            title: "Resume data loaded",
+            description: "Your resume has been successfully processed.",
+          });
         } else {
+          console.error("No resume data found in storage");
           toast({
             title: "Resume data not found",
             description: "Please upload and process your resume first.",
             variant: "destructive",
           });
-          navigate('/upload');
+          navigate('/upload', { replace: true });
         }
       } catch (error) {
         console.error("Error fetching resume data:", error);
@@ -44,7 +51,7 @@ const ResumeSummary = () => {
           description: "There was an error retrieving your resume data.",
           variant: "destructive",
         });
-        navigate('/upload');
+        navigate('/upload', { replace: true });
       } finally {
         setLoading(false);
       }

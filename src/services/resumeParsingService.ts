@@ -200,7 +200,7 @@ export const parseResume = async (file: File): Promise<ParsedResume> => {
         // Simulate a success rate of 90%
         if (Math.random() > 0.1) {
           // Select a random template and make small modifications
-          const template = { ...resumeTemplates[Math.floor(Math.random() * resumeTemplates.length)] };
+          const template = JSON.parse(JSON.stringify(resumeTemplates[Math.floor(Math.random() * resumeTemplates.length)]));
           
           // Add a small random suffix to the name to make it unique
           const suffix = Math.floor(Math.random() * 1000);
@@ -241,7 +241,12 @@ export const saveResumeData = async (resumeData: ParsedResume): Promise<void> =>
       console.log("Resume data saved successfully:", resumeData);
       
       // Store in localStorage for local persistence
-      localStorage.setItem('parsedResume', JSON.stringify(resumeData));
+      try {
+        localStorage.setItem('parsedResume', JSON.stringify(resumeData));
+        console.log("Resume data saved to localStorage");
+      } catch (error) {
+        console.error("Error saving to localStorage:", error);
+      }
       
       resolve();
     }, 1000 + Math.random() * 1000);
@@ -256,10 +261,17 @@ export const getResumeData = async (): Promise<ParsedResume | null> => {
   return new Promise((resolve) => {
     // Simulate fetching from a database (0.5-1 second)
     setTimeout(() => {
-      const savedData = localStorage.getItem('parsedResume');
-      if (savedData) {
-        resolve(JSON.parse(savedData));
-      } else {
+      try {
+        const savedData = localStorage.getItem('parsedResume');
+        console.log("Retrieved from localStorage:", savedData ? "Data found" : "No data found");
+        if (savedData) {
+          const parsedData = JSON.parse(savedData);
+          resolve(parsedData);
+        } else {
+          resolve(null);
+        }
+      } catch (error) {
+        console.error("Error retrieving from localStorage:", error);
         resolve(null);
       }
     }, 500 + Math.random() * 500);
