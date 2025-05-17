@@ -1,5 +1,5 @@
 
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { ParsedResume } from '@/services/resumeParsingService';
 import { JobMatch } from '@/services/jobs/jobMatchingService';
