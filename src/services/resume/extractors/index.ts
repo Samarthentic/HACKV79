@@ -24,4 +24,4 @@ export {
   extractEducation,
   extractExperience,
   extractCertifications
-} from './experienceExtractors';
+} from './experience';
