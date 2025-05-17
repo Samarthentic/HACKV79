@@ -1,0 +1,111 @@
+
+import * as React from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from '@/hooks/use-toast';
+import llmService from '@/services/llm/llmService';
+
+interface ApiKeySetupProps {
+  onConfigured: () => void;
+}
+
+const ApiKeySetup: React.FC<ApiKeySetupProps> = ({ onConfigured }) => {
+  const [apiKey, setApiKey] = React.useState<string>('');
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+
+  // Check if we have a stored API key
+  React.useEffect(() => {
+    const storedKey = localStorage.getItem('llm_api_key');
+    if (storedKey) {
+      llmService.setApiKey(storedKey);
+      onConfigured();
+    }
+  }, [onConfigured]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!apiKey || apiKey.trim().length < 10) {
+      toast({
+        title: "Invalid API Key",
+        description: "Please enter a valid OpenAI API key",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Set the API key in the service
+      llmService.setApiKey(apiKey);
+      
+      // Store in localStorage
+      localStorage.setItem('llm_api_key', apiKey);
+      
+      toast({
+        title: "API Key Configured",
+        description: "Your OpenAI API key has been successfully configured",
+      });
+      
+      // Call the onConfigured callback
+      onConfigured();
+      
+    } catch (error) {
+      toast({
+        title: "Configuration Error",
+        description: error instanceof Error ? error.message : "Failed to configure API key",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Card className="w-full max-w-lg mx-auto">
+      <CardHeader>
+        <CardTitle>Configure AI Integration</CardTitle>
+        <CardDescription>
+          Enter your OpenAI API key to enable enhanced resume analysis and job matching
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="api-key">
+                OpenAI API Key
+              </label>
+              <Input
+                id="api-key"
+                placeholder="sk-..."
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className="w-full"
+              />
+              <p className="text-xs text-gray-500">
+                Your API key is stored locally in your browser and is never sent to our servers.
+              </p>
+            </div>
+            <Button 
+              type="submit" 
+              className="bg-talentsleuth hover:bg-talentsleuth-light w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? "Configuring..." : "Configure AI"}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+      <CardFooter className="flex-col items-start border-t pt-4">
+        <p className="text-xs text-gray-500">
+          Don't have an OpenAI API key? <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" className="underline">Get one here</a>
+        </p>
+      </CardFooter>
+    </Card>
+  );
+};
+
+export default ApiKeySetup;

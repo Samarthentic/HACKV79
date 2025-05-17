@@ -15,6 +15,7 @@ import {
   preprocessExtractedText,
   extractSections
 } from './extractors';
+import llmService from '../llm/llmService';
 
 /**
  * Parse a resume file by extracting information using enhanced NLP techniques
@@ -27,7 +28,7 @@ export const parseResume = async (file: File): Promise<ParsedResume> => {
       console.log(`Processing file: ${file.name} (${file.type})`);
       
       // Start with a simulation of processing time for UI feedback
-      const processingTime = 2000 + Math.random() * 3000;
+      const processingTime = 1000 + Math.random() * 1000;
       
       setTimeout(async () => {
         try {
@@ -52,7 +53,7 @@ export const parseResume = async (file: File): Promise<ParsedResume> => {
           
           // Now try to parse the extracted text to get structured resume data
           // Use the extracted sections to provide more context for each extraction
-          const parsedResume: ParsedResume = {
+          const initialParsedResume: ParsedResume = {
             personalInfo: {
               name: extractName(sections.header || textContent),
               email: extractEmail(sections.header || textContent),
@@ -65,19 +66,45 @@ export const parseResume = async (file: File): Promise<ParsedResume> => {
             certifications: extractCertifications(sections.certifications || textContent)
           };
           
-          console.log("Extracted personal info:", parsedResume.personalInfo);
-          console.log("Extracted skills:", parsedResume.skills);
-          console.log("Extracted education:", parsedResume.education);
-          console.log("Extracted experience:", parsedResume.experience);
+          console.log("Initial extraction complete:", initialParsedResume);
+          
+          // Check if we have LLM service configured
+          let finalResume = initialParsedResume;
+          
+          if (llmService.isConfigured()) {
+            try {
+              toast({
+                title: "Enhancing with AI",
+                description: "Using AI to improve resume parsing accuracy...",
+              });
+              
+              // Try to enhance the resume with LLM
+              const enhancedResume = await llmService.enhanceResumeExtraction(textContent, initialParsedResume);
+              
+              // Only use enhanced data if it seems valid
+              if (enhancedResume && 
+                  enhancedResume.personalInfo && 
+                  enhancedResume.skills && 
+                  enhancedResume.skills.length > 0) {
+                console.log("LLM enhancement successful");
+                finalResume = enhancedResume as ParsedResume;
+              }
+            } catch (llmError) {
+              console.error("Error enhancing with LLM:", llmError);
+              // Continue with the initial extraction if LLM enhancement fails
+            }
+          } else {
+            console.log("LLM not configured, using initial extraction");
+          }
           
           // Validate the parsed data - if too many fields are empty, consider it a failed parse
           const emptyFields = [
-            !parsedResume.personalInfo.name || parsedResume.personalInfo.name === 'Unknown Name',
-            !parsedResume.personalInfo.email,
-            !parsedResume.personalInfo.phone,
-            parsedResume.skills.length === 0,
-            parsedResume.education.length === 0,
-            parsedResume.experience.length === 0
+            !finalResume.personalInfo.name || finalResume.personalInfo.name === 'Unknown Name',
+            !finalResume.personalInfo.email,
+            !finalResume.personalInfo.phone,
+            finalResume.skills.length === 0,
+            finalResume.education.length === 0,
+            finalResume.experience.length === 0
           ].filter(Boolean).length;
           
           if (emptyFields >= 4) {
@@ -87,19 +114,19 @@ export const parseResume = async (file: File): Promise<ParsedResume> => {
           
           // Post-process the data to ensure better quality
           // Make sure skills are unique and properly formatted
-          parsedResume.skills = [...new Set(parsedResume.skills)].map(skill => 
+          finalResume.skills = [...new Set(finalResume.skills)].map(skill => 
             skill.trim().replace(/\s+/g, ' ').replace(/^[a-z]/, c => c.toUpperCase())
           );
           
           // Log the parsed results
-          console.log("Resume parsed successfully:", parsedResume);
+          console.log("Resume parsed successfully:", finalResume);
           
           toast({
             title: "Resume parsed successfully",
             description: "Your resume has been analyzed and information extracted.",
           });
           
-          resolve(parsedResume);
+          resolve(finalResume);
         } catch (error) {
           console.error("Error in text parsing:", error);
           
