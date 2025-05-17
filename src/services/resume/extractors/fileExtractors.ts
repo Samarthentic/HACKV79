@@ -18,6 +18,8 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
       return await extractTextFromPDF(file);
     } else if (fileType === 'docx') {
       return await extractTextFromDOCX(file);
+    } else if (fileType === 'txt' || fileType === 'rtf') {
+      return await extractTextFromPlainText(file);
     } else {
       throw new Error(`Unsupported file type: ${fileType}`);
     }
@@ -28,7 +30,7 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
 };
 
 /**
- * Extract text from a PDF file using a simple text extraction approach
+ * Extract text from a PDF file using pattern matching
  */
 export const extractTextFromPDF = async (file: File): Promise<string> => {
   try {
@@ -37,24 +39,39 @@ export const extractTextFromPDF = async (file: File): Promise<string> => {
     const textDecoder = new TextDecoder('utf-8');
     const content = textDecoder.decode(arrayBuffer);
     
-    // Extract text content by looking for text patterns in the PDF
-    // This is a simple implementation and won't work for all PDFs
+    // Enhanced text extraction for PDFs
     let extractedText = '';
     
+    // Try multiple pattern approaches for better coverage
     // Look for text content between common PDF text markers
-    const textMatches = content.match(/\(\(([^\)]+)\)\)/g) || [];
-    textMatches.forEach(match => {
-      extractedText += match.replace(/\(\(|\)\)/g, '') + ' ';
-    });
+    const textMarkerPatterns = [
+      /\(\(([^\)]+)\)\)/g,          // Common text marker pattern
+      /\(([^\(\)]{2,})\)/g,         // Text in parentheses
+      /\/Text[^\/]*\/([^\/\[]+)/g,  // Text after /Text marker
+      /<text[^>]*>(.*?)<\/text>/gi, // XML-like text tags (some PDFs)
+    ];
     
-    // If we couldn't extract text with the pattern approach, return a portion of the content
+    for (const pattern of textMarkerPatterns) {
+      const matches = content.match(pattern) || [];
+      if (matches.length > 0) {
+        matches.forEach(match => {
+          const cleaned = match.replace(/\(\(|\)\)|\(|\)|\/Text|<text[^>]*>|<\/text>/gi, '');
+          if (cleaned.trim()) extractedText += cleaned + ' ';
+        });
+      }
+    }
+    
+    // If pattern-based extraction didn't yield enough text, try character filtering
     if (extractedText.trim().length < 100) {
       // Get readable text by filtering for printable ASCII characters
       extractedText = content
-        .replace(/[^\x20-\x7E]/g, ' ')
+        .replace(/[^\x20-\x7E\n]/g, ' ') // Keep newlines for structure
         .replace(/\s+/g, ' ')
         .trim();
     }
+    
+    // Process extracted text to improve quality
+    extractedText = preprocessExtractedText(extractedText);
     
     console.log(`Extracted ${extractedText.length} characters from PDF`);
     return extractedText;
@@ -65,15 +82,18 @@ export const extractTextFromPDF = async (file: File): Promise<string> => {
 };
 
 /**
- * Extract text from a DOCX file using a simple approach
- * This is limited but doesn't require external dependencies
+ * Extract text from a DOCX file using XML parsing
  */
 export const extractTextFromDOCX = async (file: File): Promise<string> => {
   try {
     const arrayBuffer = await file.arrayBuffer();
     const content = await extractTextFromDocxBuffer(arrayBuffer);
-    console.log(`Extracted ${content.length} characters from DOCX`);
-    return content;
+    
+    // Process extracted text to improve quality
+    const processedText = preprocessExtractedText(content);
+    
+    console.log(`Extracted ${processedText.length} characters from DOCX`);
+    return processedText;
   } catch (error) {
     console.error('DOCX extraction error:', error);
     throw new Error('Failed to extract text from DOCX');
@@ -81,36 +101,83 @@ export const extractTextFromDOCX = async (file: File): Promise<string> => {
 };
 
 /**
+ * New function to extract text from plain text files (TXT, RTF)
+ */
+export const extractTextFromPlainText = async (file: File): Promise<string> => {
+  try {
+    const text = await file.text();
+    const processedText = preprocessExtractedText(text);
+    console.log(`Extracted ${processedText.length} characters from plain text file`);
+    return processedText;
+  } catch (error) {
+    console.error('Plain text extraction error:', error);
+    throw new Error('Failed to extract text from plain text file');
+  }
+};
+
+/**
+ * Preprocess extracted text to improve quality and consistency
+ */
+export const preprocessExtractedText = (text: string): string => {
+  return text
+    // Normalize whitespace
+    .replace(/\s+/g, ' ')
+    // Fix common OCR/extraction errors
+    .replace(/['']/g, "'")
+    .replace(/[""]/g, '"')
+    .replace(/–/g, '-')
+    // Break text into sections based on newlines for better section detection
+    .replace(/([.!?])\s+([A-Z])/g, '$1\n$2')
+    .replace(/(\n\s*)+/g, '\n')
+    .trim();
+};
+
+/**
  * Extract text from a DOCX buffer
  * DOCX files are ZIP archives with XML content
  */
 const extractTextFromDocxBuffer = async (buffer: ArrayBuffer): Promise<string> => {
-  // This is a simplified approach that tries to extract some text
-  // It doesn't properly parse DOCX structure but might extract readable content
+  // Enhanced DOCX parsing
   const textDecoder = new TextDecoder('utf-8');
   const content = textDecoder.decode(buffer);
   
-  // Look for content in XML tags that might contain document text
   let extractedText = '';
   
-  // Try to find paragraphs and text runs in the XML
-  const paragraphMatches = content.match(/<w:p[^>]*>.*?<\/w:p>/g) || [];
-  paragraphMatches.forEach(paragraph => {
-    // Extract text runs from paragraphs
-    const textRuns = paragraph.match(/<w:t[^>]*>(.*?)<\/w:t>/g) || [];
-    textRuns.forEach(textRun => {
-      const text = textRun.replace(/<[^>]+>/g, '');
-      extractedText += text + ' ';
-    });
-    extractedText += '\n';
-  });
+  // Try multiple XML pattern approaches for better coverage
+  const xmlPatterns = [
+    // Standard DOCX text run pattern
+    {
+      paragraph: /<w:p[^>]*>.*?<\/w:p>/g,
+      textRun: /<w:t[^>]*>(.*?)<\/w:t>/g
+    },
+    // Alternative XML patterns
+    {
+      paragraph: /<p\s[^>]*>.*?<\/p>/g,
+      textRun: /<t[^>]*>(.*?)<\/t>/g
+    }
+  ];
   
-  // If we couldn't extract text with XML parsing, try a simpler approach
+  for (const pattern of xmlPatterns) {
+    const paragraphMatches = content.match(pattern.paragraph) || [];
+    if (paragraphMatches.length > 0) {
+      paragraphMatches.forEach(paragraph => {
+        // Extract text runs from paragraphs
+        const textRuns = paragraph.match(pattern.textRun) || [];
+        textRuns.forEach(textRun => {
+          const text = textRun.replace(/<[^>]+>/g, '');
+          if (text.trim()) extractedText += text + ' ';
+        });
+        extractedText += '\n';
+      });
+    }
+  }
+  
+  // If XML parsing didn't yield enough text, try a simpler approach
   if (extractedText.trim().length < 100) {
     // Get readable text by filtering for printable ASCII characters
     extractedText = content
       .replace(/<[^>]+>/g, ' ')  // Remove XML tags
-      .replace(/[^\x20-\x7E]/g, ' ')  // Keep only printable ASCII
+      .replace(/[^\x20-\x7E\n]/g, ' ')  // Keep only printable ASCII
       .replace(/\s+/g, ' ')  // Normalize whitespace
       .trim();
   }
@@ -120,6 +187,7 @@ const extractTextFromDocxBuffer = async (buffer: ArrayBuffer): Promise<string> =
 
 /**
  * Determine file type based on extension and mime type
+ * Enhanced to support more file formats
  */
 export const getFileType = (file: File): string => {
   const fileName = file.name.toLowerCase();
@@ -128,6 +196,12 @@ export const getFileType = (file: File): string => {
     return 'pdf';
   } else if (fileName.endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
     return 'docx';
+  } else if (fileName.endsWith('.doc') || file.type === 'application/msword') {
+    return 'docx'; // We'll try to process .doc files as .docx
+  } else if (fileName.endsWith('.txt') || file.type === 'text/plain') {
+    return 'txt';
+  } else if (fileName.endsWith('.rtf') || file.type === 'application/rtf') {
+    return 'rtf';
   } else {
     return 'unknown';
   }

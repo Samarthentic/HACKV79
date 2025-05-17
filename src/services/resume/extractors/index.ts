@@ -7,6 +7,8 @@ export {
   extractTextFromFile, 
   extractTextFromPDF, 
   extractTextFromDOCX,
+  extractTextFromPlainText,
+  preprocessExtractedText,
   getFileType 
 } from './fileExtractors';
 
