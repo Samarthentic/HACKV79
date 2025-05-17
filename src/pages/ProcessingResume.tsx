@@ -5,6 +5,7 @@ import { Loader } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { toast } from '@/hooks/use-toast';
 
 const ProcessingResume = () => {
   const [progress, setProgress] = useState(0);
@@ -13,14 +14,29 @@ const ProcessingResume = () => {
   
   const processingSteps = [
     { name: "Analyzing Resume", duration: 5000 },
-    { name: "Scanning Public Profiles", duration: 10000 },
-    { name: "Scoring Candidate", duration: 8000 }
+    { name: "Extracting Information", duration: 10000 },
+    { name: "Preparing Results", duration: 3000 }
   ];
   
   // Calculate total duration
   const totalDuration = processingSteps.reduce((total, step) => total + step.duration, 0);
 
   useEffect(() => {
+    // Get resume file data from session storage
+    const resumeFileJson = sessionStorage.getItem('resumeFile');
+    
+    if (!resumeFileJson) {
+      toast({
+        title: "No resume found",
+        description: "Please upload your resume first.",
+        variant: "destructive"
+      });
+      navigate('/upload');
+      return;
+    }
+
+    const resumeFile = JSON.parse(resumeFileJson);
+    
     // Start the processing animation
     let startTime = Date.now();
     let stepStartTime = startTime;
@@ -42,16 +58,64 @@ const ProcessingResume = () => {
           stepStartTime = Date.now();
           currentStepIndex++;
           setCurrentStep(currentStepIndex);
-        } else if (elapsed >= totalDuration) {
-          // We've completed all steps, redirect to results
-          clearInterval(interval);
-          navigate('/resume-summary');
         }
       }
     }, 100);
 
+    // Call the parse-resume edge function
+    const parseResume = async () => {
+      try {
+        // Prepare the request to our edge function
+        const response = await fetch('https://gjkdsndovpykswadsmcz.supabase.co/functions/v1/parse-resume', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            fileUrl: resumeFile.url,
+            fileName: resumeFile.name,
+            fileType: resumeFile.type
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to parse resume');
+        }
+
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.error || 'Unknown error parsing resume');
+        }
+        
+        // Store the parsed resume data in session storage
+        sessionStorage.setItem('parsedResumeData', JSON.stringify(data.parsedResume));
+        
+        // Wait for the UI to complete its animation before redirecting
+        setTimeout(() => {
+          clearInterval(interval);
+          navigate('/resume-summary');
+        }, Math.max(0, totalDuration - (Date.now() - startTime)));
+      } catch (error) {
+        console.error('Error parsing resume:', error);
+        toast({
+          title: "Processing error",
+          description: "There was an error processing your resume. Please try again.",
+          variant: "destructive"
+        });
+        clearInterval(interval);
+        navigate('/upload');
+      }
+    };
+
+    // Start parsing after a short delay to allow the UI to initialize
+    const parsingTimeout = setTimeout(parseResume, 1000);
+
     // Cleanup on unmount
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(parsingTimeout);
+    };
   }, [navigate, totalDuration]);
 
   return (
@@ -108,7 +172,7 @@ const ProcessingResume = () => {
             </div>
 
             <div className="mt-6 text-center text-sm text-gray-500">
-              <p>TalentSleuth AI is analyzing your resume and gathering relevant information.</p>
+              <p>TalentSleuth AI is analyzing your resume and extracting relevant information.</p>
             </div>
           </div>
         </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Check, Upload, Loader } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -7,6 +8,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 type FileStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -73,28 +75,60 @@ const UploadResume = () => {
     }
   };
 
-  const simulateUpload = () => {
+  const handleUpload = async () => {
     if (!file) return;
     
-    setStatus('uploading');
-    setUploadProgress(0);
-    
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        const newProgress = prev + Math.random() * 10;
-        if (newProgress >= 100) {
-          clearInterval(interval);
-          setStatus('success');
-          toast({
-            title: "Upload complete",
-            description: "Your resume has been successfully uploaded.",
-          });
-          return 100;
-        }
-        return newProgress;
+    try {
+      setStatus('uploading');
+      setUploadProgress(10);
+      
+      // Create a unique file path
+      const timestamp = Date.now();
+      const fileExt = file.name.split('.').pop();
+      const filePath = `resumes/${timestamp}-${file.name}`;
+      
+      // Upload file to Supabase Storage
+      const { error: uploadError, data } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+        
+      if (uploadError) throw uploadError;
+      
+      setUploadProgress(50);
+      
+      // Get public URL for the file
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+      
+      setUploadProgress(70);
+      
+      // Save upload metadata in session storage for the processing page
+      sessionStorage.setItem('resumeFile', JSON.stringify({
+        name: file.name,
+        type: file.type,
+        url: publicUrl,
+        path: filePath
+      }));
+      
+      setUploadProgress(100);
+      setStatus('success');
+      
+      // Redirect to processing page
+      navigate('/processing');
+      
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setStatus('error');
+      toast({
+        title: "Upload failed",
+        description: "There was an error uploading your resume. Please try again.",
+        variant: "destructive"
       });
-    }, 300);
+    }
   };
 
   const handleNext = () => {
@@ -107,17 +141,7 @@ const UploadResume = () => {
       return;
     }
     
-    if (status !== 'success') {
-      simulateUpload();
-      
-      // After 3 seconds, redirect to processing screen
-      setTimeout(() => {
-        navigate('/processing');
-      }, 3000);
-    } else {
-      // Go to processing page immediately if already uploaded
-      navigate('/processing');
-    }
+    handleUpload();
   };
 
   return (

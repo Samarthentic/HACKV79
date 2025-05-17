@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -19,8 +20,33 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 
-// Mock data - in a real app this would come from an API or state
-const initialResumeData = {
+type ResumeData = {
+  personalInfo: {
+    name: string;
+    email: string;
+    phone: string;
+    location: string;
+  };
+  skills: string[];
+  education: {
+    degree: string;
+    institution: string;
+    year: string;
+  }[];
+  experience: {
+    title: string;
+    company: string;
+    period: string;
+    description: string;
+  }[];
+  certifications: {
+    name: string;
+    issuer: string;
+    year: string;
+  }[];
+};
+
+const fallbackResumeData: ResumeData = {
   personalInfo: {
     name: "Alex Johnson",
     email: "alex.johnson@example.com",
@@ -154,14 +180,55 @@ const EditDialog = ({ title, content, onSave }: EditDialogProps) => {
 };
 
 const ResumeSummary = () => {
-  const [resumeData, setResumeData] = useState(initialResumeData);
+  const [resumeData, setResumeData] = useState<ResumeData>(fallbackResumeData);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Load parsed resume data from session storage
+    const loadResumeData = () => {
+      const parsedResumeJson = sessionStorage.getItem('parsedResumeData');
+      
+      if (!parsedResumeJson) {
+        toast({
+          title: "No parsed resume data",
+          description: "Please upload and process your resume first.",
+          variant: "destructive"
+        });
+        navigate('/upload');
+        return;
+      }
+
+      try {
+        const parsedResume = JSON.parse(parsedResumeJson);
+        setResumeData(parsedResume);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error parsing resume data:', error);
+        toast({
+          title: "Data error",
+          description: "There was an error with your resume data. Using default template.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+      }
+    };
+
+    loadResumeData();
+  }, [navigate]);
 
   const handleSectionUpdate = (section: EditableSection, updatedData: any) => {
     setResumeData({
       ...resumeData,
       [section]: updatedData
     });
+    
+    // Update session storage with new data
+    const updatedResumeData = {
+      ...resumeData,
+      [section]: updatedData
+    };
+    sessionStorage.setItem('parsedResumeData', JSON.stringify(updatedResumeData));
   };
 
   return (
@@ -174,138 +241,151 @@ const ResumeSummary = () => {
           Here's the information we've extracted from your resume. You can edit any section if needed.
         </p>
 
-        {/* Personal Information */}
-        <Card className="mb-6">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle>Personal Information</CardTitle>
-            <EditDialog 
-              title="Personal Information"
-              content={resumeData.personalInfo}
-              onSave={(updated) => handleSectionUpdate('personalInfo', updated)}
-            />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <h3 className="font-bold text-xl">{resumeData.personalInfo.name}</h3>
-              <div className="text-gray-600 grid gap-1">
-                <p>{resumeData.personalInfo.email}</p>
-                <p>{resumeData.personalInfo.phone}</p>
-                <p>{resumeData.personalInfo.location}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Skills */}
-        <Card className="mb-6">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle>Skills</CardTitle>
-            <EditDialog 
-              title="Skills"
-              content={resumeData.skills}
-              onSave={(updated) => handleSectionUpdate('skills', updated)}
-            />
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {resumeData.skills.map((skill, index) => (
-                <span 
-                  key={index}
-                  className="bg-talentsleuth/10 text-talentsleuth px-3 py-1 rounded-full text-sm"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Education */}
-        <Card className="mb-6">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle>Education</CardTitle>
-            <EditDialog 
-              title="Education"
-              content={resumeData.education}
-              onSave={(updated) => handleSectionUpdate('education', updated)}
-            />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {resumeData.education.map((edu, index) => (
-                <div key={index} className={index > 0 ? "pt-4 border-t" : ""}>
-                  <h3 className="font-semibold">{edu.degree}</h3>
-                  <p className="text-gray-600">{edu.institution}</p>
-                  <p className="text-gray-500 text-sm">{edu.year}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Experience */}
-        <Card className="mb-6">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle>Experience</CardTitle>
-            <EditDialog 
-              title="Experience"
-              content={resumeData.experience}
-              onSave={(updated) => handleSectionUpdate('experience', updated)}
-            />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {resumeData.experience.map((exp, index) => (
-                <div key={index} className={index > 0 ? "pt-6 border-t" : ""}>
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-semibold">{exp.title}</h3>
-                    <span className="text-gray-500 text-sm">{exp.period}</span>
+        {isLoading ? (
+          <div className="flex justify-center items-center p-12">
+            <Loader className="h-8 w-8 animate-spin text-talentsleuth" />
+          </div>
+        ) : (
+          <>
+            {/* Personal Information */}
+            <Card className="mb-6">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle>Personal Information</CardTitle>
+                <EditDialog 
+                  title="Personal Information"
+                  content={resumeData.personalInfo}
+                  onSave={(updated) => handleSectionUpdate('personalInfo', updated)}
+                />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <h3 className="font-bold text-xl">{resumeData.personalInfo.name}</h3>
+                  <div className="text-gray-600 grid gap-1">
+                    <p>{resumeData.personalInfo.email}</p>
+                    <p>{resumeData.personalInfo.phone}</p>
+                    <p>{resumeData.personalInfo.location}</p>
                   </div>
-                  <p className="text-gray-600">{exp.company}</p>
-                  <p className="text-gray-700 mt-2 text-sm">{exp.description}</p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* Certifications */}
-        <Card className="mb-10">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle>Certifications</CardTitle>
-            <EditDialog 
-              title="Certifications"
-              content={resumeData.certifications}
-              onSave={(updated) => handleSectionUpdate('certifications', updated)}
-            />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {resumeData.certifications.map((cert, index) => (
-                <div key={index} className={index > 0 ? "pt-4 border-t" : ""}>
-                  <h3 className="font-semibold">{cert.name}</h3>
-                  <p className="text-gray-600">{cert.issuer}</p>
-                  <p className="text-gray-500 text-sm">{cert.year}</p>
+            {/* Skills */}
+            <Card className="mb-6">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle>Skills</CardTitle>
+                <EditDialog 
+                  title="Skills"
+                  content={resumeData.skills}
+                  onSave={(updated) => handleSectionUpdate('skills', updated)}
+                />
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {resumeData.skills.map((skill, index) => (
+                    <span 
+                      key={index}
+                      className="bg-talentsleuth/10 text-talentsleuth px-3 py-1 rounded-full text-sm"
+                    >
+                      {skill}
+                    </span>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        <div className="flex justify-end">
-          <Button 
-            variant="outline" 
-            className="mr-2"
-          >
-            Back
-          </Button>
-          <Button 
-            className="bg-talentsleuth hover:bg-talentsleuth-light"
-            onClick={() => navigate('/job-fitment')}
-          >
-            Continue to Job Matches
-          </Button>
-        </div>
+            {/* Education */}
+            <Card className="mb-6">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle>Education</CardTitle>
+                <EditDialog 
+                  title="Education"
+                  content={resumeData.education}
+                  onSave={(updated) => handleSectionUpdate('education', updated)}
+                />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {resumeData.education.map((edu, index) => (
+                    <div key={index} className={index > 0 ? "pt-4 border-t" : ""}>
+                      <h3 className="font-semibold">{edu.degree}</h3>
+                      <p className="text-gray-600">{edu.institution}</p>
+                      <p className="text-gray-500 text-sm">{edu.year}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Experience */}
+            <Card className="mb-6">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle>Experience</CardTitle>
+                <EditDialog 
+                  title="Experience"
+                  content={resumeData.experience}
+                  onSave={(updated) => handleSectionUpdate('experience', updated)}
+                />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {resumeData.experience.map((exp, index) => (
+                    <div key={index} className={index > 0 ? "pt-6 border-t" : ""}>
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-semibold">{exp.title}</h3>
+                        <span className="text-gray-500 text-sm">{exp.period}</span>
+                      </div>
+                      <p className="text-gray-600">{exp.company}</p>
+                      <p className="text-gray-700 mt-2 text-sm">{exp.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Certifications */}
+            <Card className="mb-10">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle>Certifications</CardTitle>
+                <EditDialog 
+                  title="Certifications"
+                  content={resumeData.certifications}
+                  onSave={(updated) => handleSectionUpdate('certifications', updated)}
+                />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {resumeData.certifications && resumeData.certifications.length > 0 ? (
+                    resumeData.certifications.map((cert, index) => (
+                      <div key={index} className={index > 0 ? "pt-4 border-t" : ""}>
+                        <h3 className="font-semibold">{cert.name}</h3>
+                        <p className="text-gray-600">{cert.issuer}</p>
+                        <p className="text-gray-500 text-sm">{cert.year}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 italic">No certifications found</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end">
+              <Button 
+                variant="outline" 
+                className="mr-2"
+                onClick={() => navigate('/upload')}
+              >
+                Back
+              </Button>
+              <Button 
+                className="bg-talentsleuth hover:bg-talentsleuth-light"
+                onClick={() => navigate('/job-fitment')}
+              >
+                Continue to Job Matches
+              </Button>
+            </div>
+          </>
+        )}
       </div>
       
       <Footer />
