@@ -67,8 +67,10 @@ const ProcessingResume = () => {
               return saveResumeData(parsedData);
             })
             .then(() => {
-              // Navigate to the resume summary page
-              navigate('/resume-summary');
+              // Add a console log to debug the navigation
+              console.log("Resume processing complete, navigating to resume-summary");
+              // Navigate to the resume summary page with replace: true to prevent back navigation to processing
+              navigate('/resume-summary', { replace: true });
             })
             .catch(error => {
               console.error("Error processing resume:", error);
