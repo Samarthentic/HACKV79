@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -30,11 +30,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const initialLoadComplete = useRef(false);
+  const authChangeProcessed = useRef(false);
 
   useEffect(() => {
-    // First set up the auth state listener
+    // First check for existing session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        
+        if (currentSession?.user) {
+          fetchProfile(currentSession.user.id);
+        }
+        
+        setLoading(false);
+        initialLoadComplete.current = true;
+      } catch (error) {
+        console.error("Error getting session:", error);
+        setLoading(false);
+        initialLoadComplete.current = true;
+      }
+    };
+
+    initializeAuth();
+    
+    // Then set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
+        if (!initialLoadComplete.current) {
+          return; // Wait for initial session check
+        }
+
+        // Prevent duplicate auth handling
+        if (authChangeProcessed.current) {
+          authChangeProcessed.current = false;
+          return;
+        }
+
+        authChangeProcessed.current = true;
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
@@ -47,13 +82,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setProfile(null);
         }
 
-        // Handle auth events but don't show redundant toasts
-        if (event === 'SIGNED_IN' && !session) {
+        // Handle auth events with checks to prevent duplicate toasts
+        if (event === 'SIGNED_IN' && !session?.user?.id) {
           toast({
             title: "Signed in successfully",
             description: "Welcome back!",
           });
-        } else if (event === 'SIGNED_OUT' && session) {
+        } else if (event === 'SIGNED_OUT' && session?.user?.id) {
           toast({
             title: "Signed out",
             description: "You have been signed out.",
@@ -61,18 +96,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }
     );
-
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      
-      if (currentSession?.user) {
-        fetchProfile(currentSession.user.id);
-      }
-      
-      setLoading(false);
-    });
 
     return () => {
       subscription.unsubscribe();

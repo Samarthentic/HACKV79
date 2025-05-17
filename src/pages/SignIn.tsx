@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
 const SignIn = () => {
@@ -24,7 +23,9 @@ const SignIn = () => {
   const from = location.state?.from || "/dashboard";
 
   useEffect(() => {
+    // If already logged in, redirect to the intended destination
     if (user) {
+      console.log("User is already logged in, redirecting to:", from);
       navigate(from);
     }
   }, [user, navigate, from]);
@@ -43,8 +44,8 @@ const SignIn = () => {
           variant: "destructive",
         });
       } else {
-        // Navigate to the page the user was trying to access or dashboard
-        navigate(from);
+        console.log("Sign in successful, will redirect to:", from);
+        // The redirect will happen via the useEffect above
       }
     } catch (err) {
       toast({
