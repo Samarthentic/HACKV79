@@ -5,3 +5,4 @@ export * from './textPreprocessing';
 export * from './pdfExtractor';
 export * from './docxExtractor';
 export * from './plainTextExtractor';
+

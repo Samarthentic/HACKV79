@@ -1,67 +1,55 @@
 
 /**
- * Text preprocessing for improving extraction quality
+ * Enhanced text preprocessing for resume content
+ * Improves text quality for better extraction results
  */
 
 /**
- * Preprocess extracted text to improve quality and consistency
+ * Preprocess extracted text to improve quality
+ * @param text Raw text content
+ * @returns Processed text
  */
 export const preprocessExtractedText = (text: string): string => {
-  let processed = text
-    // Normalize whitespace
-    .replace(/\s+/g, ' ')
-    // Fix common extraction errors
-    .replace(/['']/g, "'")
+  if (!text) return '';
+  
+  console.log("Starting text preprocessing...");
+  
+  // Remove excess whitespace
+  let processed = text.replace(/\s+/g, ' ').trim();
+  
+  // Fix common OCR errors
+  processed = processed
+    .replace(/[''`]/g, "'")
     .replace(/[""]/g, '"')
-    .replace(/–/g, '-')
-    .trim();
-    
-  // Improve section detection by adding newlines
-  processed = processed
-    // Add newlines after periods followed by capital letters (likely new sentences)
-    .replace(/([.!?])\s+([A-Z])/g, '$1\n$2')
-    // Replace multiple newlines with a single one
-    .replace(/(\n\s*)+/g, '\n')
-    // Add newlines before likely section headers (enhanced pattern matching)
-    .replace(/([A-Z][A-Z\s]{2,}:)/g, '\n$1')
-    // Add newlines before common section headers with more variations
-    .replace(/\s+(EDUCATION|EXPERIENCE|SKILLS|WORK HISTORY|CERTIFICATIONS|ACHIEVEMENTS|PROFESSIONAL SUMMARY|OBJECTIVE|QUALIFICATIONS|TRAINING|HONORS|AWARDS|PUBLICATIONS|LANGUAGES|INTERESTS|VOLUNTEER|AFFILIATIONS)(\s+|:)/gi, '\n$1$2')
-    // Add newlines before capitalized sections that are likely headers
-    .replace(/([^.\n])\s+([A-Z][A-Za-z\s]{2,}:)/g, '$1\n$2');
+    .replace(/[–—]/g, '-')
+    .replace(/\r\n|\r/g, '\n');
   
-  // Enhance section segmentation
-  processed = processed
-    // Add extra newline before key resume sections to ensure clear separation
-    .replace(/\n(Education|Experience|Skills|Work History|Professional Experience|Certifications|Achievements)/gi, '\n\n$1')
-    // Format bullet points consistently
-    .replace(/([•\*\-])\s*/g, '\n• ');
+  // Normalize line breaks
+  processed = processed.replace(/\n{3,}/g, '\n\n');
   
-  // Enhanced detection of contact information
-  processed = processed
-    // Ensure email addresses are on their own line
-    .replace(/([^\n])([\w\.-]+@[\w\.-]+\.\w+)/g, '$1\n$2')
-    // Ensure phone numbers are on their own line (various formats)
-    .replace(/([^\n])((?:\+?1[\s-]?)?\(?[0-9]{3}\)?[\s.-]?[0-9]{3}[\s.-]?[0-9]{4})/g, '$1\n$2')
-    // Ensure URLs are on their own line
-    .replace(/([^\n])(https?:\/\/[^\s]+)/g, '$1\n$2');
-  
-  // Improve detection of job titles and companies
-  processed = processed
-    // Add spacing for date ranges to help with experience detection
-    .replace(/(\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}\s*[-–]\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}|\d{4}\s*[-–]\s*\d{4}|\d{4}\s*[-–]\s*(?:Present|Current|Now))/gi, '\n$1\n')
-    // Add line breaks before job titles (typically capitalized)
-    .replace(/([^\n])(\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:Engineer|Developer|Manager|Director|Analyst|Designer|Consultant|Specialist|Coordinator|Assistant|Associate|Lead|Head|Chief|Officer|Administrator|Supervisor|Representative)\b)/g, '$1\n$2');
-    
+  console.log("Text preprocessing complete.");
   return processed;
 };
 
 /**
- * Extract key sections from resume text with enhanced pattern recognition
- * This helps improve the accuracy of information extraction
+ * Extract sections from resume text
+ * @param text Resume text content
+ * @returns Object with sections as properties
  */
 export const extractSections = (text: string): Record<string, string> => {
-  const processedText = preprocessExtractedText(text);
-  const lines = processedText.split('\n');
+  if (!text) return {
+    header: '',
+    summary: '',
+    experience: '',
+    education: '',
+    skills: '',
+    certifications: '',
+    references: '',
+    other: ''
+  };
+  
+  console.log("Extracting resume sections...");
+  
   const sections: Record<string, string> = {
     header: '',
     summary: '',
@@ -69,57 +57,58 @@ export const extractSections = (text: string): Record<string, string> => {
     education: '',
     skills: '',
     certifications: '',
+    references: '',
     other: ''
   };
   
-  let currentSection = 'header';
-  let headerEndDetected = false;
+  // Extract header (usually first few lines)
+  const lines = text.split('\n');
+  sections.header = lines.slice(0, Math.min(6, lines.length)).join('\n');
   
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
+  // Find common section headers
+  const sectionPatterns = [
+    { name: 'summary', patterns: [/\b(summary|profile|objective|about me)\b/i] },
+    { name: 'experience', patterns: [/\b(experience|work experience|employment|work history|professional experience)\b/i] },
+    { name: 'education', patterns: [/\b(education|academic|qualifications|degrees)\b/i] },
+    { name: 'skills', patterns: [/\b(skills|technical skills|core competencies|expertise|qualifications|proficiencies)\b/i] },
+    { name: 'certifications', patterns: [/\b(certifications|certificates|accreditations|licenses)\b/i] },
+    { name: 'references', patterns: [/\b(references|referees)\b/i] }
+  ];
+  
+  // Try to locate sections using common patterns
+  let currentSection = 'other';
+  let currentContent: string[] = [];
+  
+  lines.forEach(line => {
+    // Check if this line is a section header
+    let isSectionHeader = false;
     
-    // Detection of section headers
-    if (/^(?:PROFESSIONAL\s+)?EXPERIENCE|WORK(?:\s+HISTORY)?|EMPLOYMENT/i.test(line)) {
-      currentSection = 'experience';
-      continue;
-    } else if (/^EDUCATION|ACADEMIC/i.test(line)) {
-      currentSection = 'education';
-      continue;
-    } else if (/^SKILLS|TECHNOLOGIES|PROFICIENCIES|EXPERTISE/i.test(line)) {
-      currentSection = 'skills';
-      continue;
-    } else if (/^CERTIFICATIONS|CERTIFICATES|LICENSES/i.test(line)) {
-      currentSection = 'certifications';
-      continue;
-    } else if (/^(?:PROFESSIONAL\s+)?SUMMARY|PROFILE|OBJECTIVE|ABOUT/i.test(line)) {
-      currentSection = 'summary';
-      continue;
-    } else if (
-      !headerEndDetected && 
-      (line.includes('@') || 
-       /^\d{3}[-.\s]?\d{3}[-.\s]?\d{4}$/.test(line.replace(/\D/g, '')) || 
-       /linkedin\.com/.test(line))
-    ) {
-      // Still in the header section if we find contact details
-      currentSection = 'header';
-    } else if (!headerEndDetected && 
-               currentSection === 'header' && 
-               line.length > 30 && 
-               !/^[A-Z\s]+$/.test(line)) {
-      // Likely moved past the header into summary
-      headerEndDetected = true;
-      currentSection = 'summary';
+    for (const section of sectionPatterns) {
+      if (section.patterns.some(pattern => pattern.test(line))) {
+        // Save previous section content
+        if (currentContent.length > 0) {
+          sections[currentSection] += currentContent.join('\n');
+          currentContent = [];
+        }
+        
+        // Set new current section
+        currentSection = section.name;
+        isSectionHeader = true;
+        break;
+      }
     }
     
-    // Add the line to the appropriate section
-    sections[currentSection] += line + '\n';
-  }
-  
-  // Clean up each section
-  Object.keys(sections).forEach(key => {
-    sections[key] = sections[key].trim();
+    if (!isSectionHeader) {
+      currentContent.push(line);
+    }
   });
   
+  // Add content of last section
+  if (currentContent.length > 0) {
+    sections[currentSection] += currentContent.join('\n');
+  }
+  
+  // Log result and return
+  console.log("Sections extracted:", Object.keys(sections).map(k => `${k}: ${sections[k].length} chars`));
   return sections;
 };

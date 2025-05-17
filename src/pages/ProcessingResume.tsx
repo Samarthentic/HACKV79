@@ -11,6 +11,7 @@ import { toast } from '@/hooks/use-toast';
 const ProcessingResume = () => {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const file = location.state?.file;
@@ -26,6 +27,7 @@ const ProcessingResume = () => {
 
   useEffect(() => {
     if (!file) {
+      console.error("No file found in location state");
       toast({
         title: "No resume file found",
         description: "Please upload your resume first",
@@ -34,6 +36,8 @@ const ProcessingResume = () => {
       navigate('/upload');
       return;
     }
+    
+    console.log(`Processing file: ${file.name} of type: ${file.type}`);
     
     // Start the processing animation
     let startTime = Date.now();
@@ -70,6 +74,7 @@ const ProcessingResume = () => {
             .then(() => {
               // Add a console log to debug the navigation
               console.log("Resume processing complete, navigating to resume-summary");
+              setIsProcessing(false);
               
               // Important: Use setTimeout to ensure the state is properly saved before navigation
               setTimeout(() => {
@@ -85,6 +90,8 @@ const ProcessingResume = () => {
                 variant: "destructive",
               });
               
+              setIsProcessing(false);
+              
               // Even on error, try to continue to the resume summary page
               // The parseResume function should have fallen back to a template
               setTimeout(() => {
@@ -96,7 +103,10 @@ const ProcessingResume = () => {
     }, 100);
 
     // Cleanup on unmount
-    return () => clearInterval(interval);
+    return () => {
+      console.log("Cleaning up timer");
+      clearInterval(interval);
+    };
   }, [navigate, totalDuration, file]);
 
   return (
