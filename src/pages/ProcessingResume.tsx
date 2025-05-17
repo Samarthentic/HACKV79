@@ -67,7 +67,6 @@ const ProcessingResume = () => {
               return saveResumeData(parsedData);
             })
             .then(() => {
-              // Add a console log to debug the navigation
               console.log("Resume processing complete, navigating to resume-summary");
               
               // Important: Use setTimeout to ensure the state is properly saved before navigation
@@ -80,10 +79,13 @@ const ProcessingResume = () => {
               console.error("Error processing resume:", error);
               toast({
                 title: "Error processing resume",
-                description: "There was an error processing your resume. Please try again.",
+                description: "There was an error processing your resume, but we've generated sample data for you to continue.",
                 variant: "destructive",
               });
-              navigate('/upload');
+              // Even on error, try to continue to resume-summary with sample data
+              setTimeout(() => {
+                navigate('/resume-summary', { replace: true });
+              }, 500);
             });
         }
       }
