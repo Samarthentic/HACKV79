@@ -30,51 +30,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const initialLoadComplete = useRef(false);
-  const authChangeProcessed = useRef(false);
+  const isInitialized = useRef(false);
 
   useEffect(() => {
-    // First check for existing session
     const initializeAuth = async () => {
       try {
+        // Get the current session
         const { data: { session: currentSession } } = await supabase.auth.getSession();
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
         
         if (currentSession?.user) {
+          setSession(currentSession);
+          setUser(currentSession.user);
           fetchProfile(currentSession.user.id);
         }
-        
-        setLoading(false);
-        initialLoadComplete.current = true;
       } catch (error) {
         console.error("Error getting session:", error);
+      } finally {
         setLoading(false);
-        initialLoadComplete.current = true;
+        isInitialized.current = true;
       }
     };
 
-    initializeAuth();
-    
-    // Then set up the auth state listener
+    // Set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        if (!initialLoadComplete.current) {
-          return; // Wait for initial session check
-        }
-
-        // Prevent duplicate auth handling
-        if (authChangeProcessed.current) {
-          authChangeProcessed.current = false;
-          return;
-        }
-
-        authChangeProcessed.current = true;
+      async (event, currentSession) => {
+        // Skip if not fully initialized yet to avoid duplicate events
+        if (!isInitialized.current) return;
+        
+        console.log("Auth state changed:", event);
+        
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
         if (currentSession?.user) {
-          // Defer profile fetch to prevent Supabase auth deadlocks
+          // Use setTimeout to prevent potential Supabase auth deadlocks
           setTimeout(() => {
             fetchProfile(currentSession.user.id);
           }, 0);
@@ -82,13 +71,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setProfile(null);
         }
 
-        // Handle auth events with checks to prevent duplicate toasts
-        if (event === 'SIGNED_IN' && !session?.user?.id) {
+        // Show toast notifications for auth events
+        if (event === 'SIGNED_IN') {
           toast({
             title: "Signed in successfully",
             description: "Welcome back!",
           });
-        } else if (event === 'SIGNED_OUT' && session?.user?.id) {
+        } else if (event === 'SIGNED_OUT') {
           toast({
             title: "Signed out",
             description: "You have been signed out.",
@@ -96,6 +85,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }
     );
+
+    initializeAuth();
 
     return () => {
       subscription.unsubscribe();

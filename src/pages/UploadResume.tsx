@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Check, Upload, Loader } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 type FileStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -19,9 +20,17 @@ const UploadResume = () => {
   const [status, setStatus] = useState<FileStatus>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
   const fileExtensions = ['.pdf', '.docx'];
+
+  // Verify that the user is authenticated
+  useEffect(() => {
+    if (user) {
+      console.log("User authenticated in UploadResume:", user.id);
+    }
+  }, [user]);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -76,16 +85,16 @@ const UploadResume = () => {
   };
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (!file || !user) return;
     
     try {
       setStatus('uploading');
       setUploadProgress(10);
       
-      // Create a unique file path
+      // Create a unique file path with user ID included
       const timestamp = Date.now();
       const fileExt = file.name.split('.').pop();
-      const filePath = `resumes/${timestamp}-${file.name}`;
+      const filePath = `resumes/${user.id}/${timestamp}-${file.name}`;
       
       // Upload file to Supabase Storage
       const { error: uploadError, data } = await supabase.storage
@@ -111,14 +120,17 @@ const UploadResume = () => {
         name: file.name,
         type: file.type,
         url: publicUrl,
-        path: filePath
+        path: filePath,
+        userId: user.id
       }));
       
       setUploadProgress(100);
       setStatus('success');
       
       // Redirect to processing page
-      navigate('/processing');
+      setTimeout(() => {
+        navigate('/processing');
+      }, 500);
       
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -148,7 +160,7 @@ const UploadResume = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-1 section-padding flex flex-col items-center justify-center">
+      <div className="flex-1 section-padding flex flex-col items-center justify-center pt-24 px-4 py-8">
         <div className="w-full max-w-3xl">
           <h1 className="text-3xl font-bold mb-2 text-talentsleuth">Upload Your Resume</h1>
           <p className="text-gray-600 mb-8">Our AI will analyze your resume and match you with the best job opportunities.</p>

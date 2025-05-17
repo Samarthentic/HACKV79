@@ -28,7 +28,7 @@ const SignIn = () => {
       console.log("User is already logged in, redirecting to:", from);
       setTimeout(() => {
         navigate(from);
-      }, 100); // Small delay to ensure the UI updates properly
+      }, 200); // Small delay to ensure the UI updates properly
     }
   }, [user, navigate, from]);
 

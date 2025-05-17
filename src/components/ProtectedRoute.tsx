@@ -13,16 +13,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
   const { toast } = useToast();
   
+  // Only show toast once when authentication fails
   useEffect(() => {
-    // Show toast only when user is not authenticated and not on initial load
-    if (!loading && !user && location.pathname !== '/signin' && location.pathname !== '/signup') {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to access this page.",
-        variant: "destructive",
-      });
+    if (!loading && !user) {
+      // Don't show toast during initial loading or if we're already on auth pages
+      if (location.pathname !== '/signin' && location.pathname !== '/signup') {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to access this page.",
+          variant: "destructive",
+        });
+      }
     }
-  }, [user, loading, location.pathname, toast]);
+  }, [loading, user, location.pathname, toast]);
   
   // Show loading state while checking authentication
   if (loading) {

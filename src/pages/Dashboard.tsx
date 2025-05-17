@@ -6,9 +6,15 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, Mail, Clock, FileText } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
+
+  const handleUploadClick = () => {
+    navigate('/upload');
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -90,7 +96,10 @@ const Dashboard = () => {
                   <p className="max-w-sm mx-auto mb-6">
                     Upload your resume to get insights and track your job search progress.
                   </p>
-                  <Button className="bg-talentsleuth hover:bg-talentsleuth-dark">
+                  <Button 
+                    className="bg-talentsleuth hover:bg-talentsleuth-dark"
+                    onClick={handleUploadClick}
+                  >
                     Upload Resume
                   </Button>
                 </div>
