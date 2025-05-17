@@ -1,15 +1,19 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { parseResume, saveResumeData } from '@/services/resumeParsingService';
+import { toast } from '@/hooks/use-toast';
 
 const ProcessingResume = () => {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
+  const file = location.state?.file;
   
   const processingSteps = [
     { name: "Analyzing Resume", duration: 5000 },
@@ -21,6 +25,16 @@ const ProcessingResume = () => {
   const totalDuration = processingSteps.reduce((total, step) => total + step.duration, 0);
 
   useEffect(() => {
+    if (!file) {
+      toast({
+        title: "No resume file found",
+        description: "Please upload your resume first",
+        variant: "destructive",
+      });
+      navigate('/upload');
+      return;
+    }
+    
     // Start the processing animation
     let startTime = Date.now();
     let stepStartTime = startTime;
@@ -43,16 +57,35 @@ const ProcessingResume = () => {
           currentStepIndex++;
           setCurrentStep(currentStepIndex);
         } else if (elapsed >= totalDuration) {
-          // We've completed all steps, redirect to results
+          // We've completed all steps, process the resume and redirect to results
           clearInterval(interval);
-          navigate('/resume-summary');
+          
+          // Simulate parsing the resume
+          parseResume(file)
+            .then(parsedData => {
+              // Save the parsed data
+              return saveResumeData(parsedData);
+            })
+            .then(() => {
+              // Navigate to the resume summary page
+              navigate('/resume-summary');
+            })
+            .catch(error => {
+              console.error("Error processing resume:", error);
+              toast({
+                title: "Error processing resume",
+                description: "There was an error processing your resume. Please try again.",
+                variant: "destructive",
+              });
+              navigate('/upload');
+            });
         }
       }
     }, 100);
 
     // Cleanup on unmount
     return () => clearInterval(interval);
-  }, [navigate, totalDuration]);
+  }, [navigate, totalDuration, file]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -108,7 +141,7 @@ const ProcessingResume = () => {
             </div>
 
             <div className="mt-6 text-center text-sm text-gray-500">
-              <p>TalentSleuth AI is analyzing your resume and gathering relevant information.</p>
+              <p>TalentSleuth AI is analyzing your resume and extracting your skills, experience, and qualifications.</p>
             </div>
           </div>
         </div>

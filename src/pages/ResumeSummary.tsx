@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Edit } from 'lucide-react';
+
+import React, { useState, useEffect } from 'react';
+import { Edit, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -18,58 +19,8 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-
-// Mock data - in a real app this would come from an API or state
-const initialResumeData = {
-  personalInfo: {
-    name: "Alex Johnson",
-    email: "alex.johnson@example.com",
-    phone: "(555) 123-4567",
-    location: "San Francisco, CA"
-  },
-  skills: [
-    "JavaScript", "React", "TypeScript", "Node.js", "GraphQL", "AWS", 
-    "Product Management", "Agile", "Team Leadership"
-  ],
-  education: [
-    {
-      degree: "Master of Science in Computer Science",
-      institution: "Stanford University",
-      year: "2018 - 2020"
-    },
-    {
-      degree: "Bachelor of Engineering in Software Engineering",
-      institution: "University of California, Berkeley",
-      year: "2014 - 2018"
-    }
-  ],
-  experience: [
-    {
-      title: "Senior Frontend Developer",
-      company: "Tech Solutions Inc.",
-      period: "2020 - Present",
-      description: "Led frontend development for multiple client projects. Improved site performance by 35% through code optimization."
-    },
-    {
-      title: "Software Engineer",
-      company: "Innovative Apps LLC",
-      period: "2018 - 2020",
-      description: "Developed and maintained multiple React applications. Collaborated with design team to implement UI/UX improvements."
-    }
-  ],
-  certifications: [
-    {
-      name: "AWS Certified Developer - Associate",
-      issuer: "Amazon Web Services",
-      year: "2021"
-    },
-    {
-      name: "Professional Scrum Master I",
-      issuer: "Scrum.org",
-      year: "2019"
-    }
-  ]
-};
+import { getResumeData, saveResumeData, ParsedResume } from '@/services/resumeParsingService';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type EditableSection = 'personalInfo' | 'skills' | 'education' | 'experience' | 'certifications';
 type EditDialogProps = {
@@ -154,15 +105,122 @@ const EditDialog = ({ title, content, onSave }: EditDialogProps) => {
 };
 
 const ResumeSummary = () => {
-  const [resumeData, setResumeData] = useState(initialResumeData);
+  const [resumeData, setResumeData] = useState<ParsedResume | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
-  const handleSectionUpdate = (section: EditableSection, updatedData: any) => {
-    setResumeData({
+  useEffect(() => {
+    // Fetch the resume data when the component mounts
+    const fetchResumeData = async () => {
+      try {
+        const data = await getResumeData();
+        if (data) {
+          setResumeData(data);
+        } else {
+          toast({
+            title: "Resume data not found",
+            description: "Please upload and process your resume first.",
+            variant: "destructive",
+          });
+          navigate('/upload');
+        }
+      } catch (error) {
+        console.error("Error fetching resume data:", error);
+        toast({
+          title: "Error fetching resume data",
+          description: "There was an error retrieving your resume data.",
+          variant: "destructive",
+        });
+        navigate('/upload');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResumeData();
+  }, [navigate]);
+
+  const handleSectionUpdate = async (section: EditableSection, updatedData: any) => {
+    if (!resumeData) return;
+
+    const updatedResumeData = {
       ...resumeData,
       [section]: updatedData
-    });
+    };
+    
+    setResumeData(updatedResumeData);
+    
+    try {
+      // Save the updated resume data
+      await saveResumeData(updatedResumeData);
+    } catch (error) {
+      console.error("Error saving updated resume data:", error);
+      toast({
+        title: "Error saving changes",
+        description: "There was an error saving your changes. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
+
+  const handleBack = () => {
+    navigate('/upload');
+  };
+
+  const handleContinue = () => {
+    navigate('/job-fitment');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 section-padding container mx-auto max-w-4xl py-10">
+          <h1 className="text-3xl font-bold mb-6 text-talentsleuth">Resume Summary</h1>
+          <div className="space-y-6">
+            {[1, 2, 3, 4, 5].map((_, index) => (
+              <Card key={index} className="mb-6">
+                <CardHeader className="pb-3">
+                  <Skeleton className="h-6 w-32" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!resumeData) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 section-padding container mx-auto max-w-4xl py-10 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-4 text-talentsleuth">No Resume Data Found</h1>
+            <p className="text-gray-600 mb-6">
+              Please upload and process your resume first to view the summary.
+            </p>
+            <Button 
+              className="bg-talentsleuth hover:bg-talentsleuth-light"
+              onClick={() => navigate('/upload')}
+            >
+              Upload Resume
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -292,18 +350,21 @@ const ResumeSummary = () => {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end">
+        <div className="flex justify-between">
           <Button 
             variant="outline" 
-            className="mr-2"
+            onClick={handleBack}
+            className="flex items-center gap-2"
           >
+            <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
           <Button 
-            className="bg-talentsleuth hover:bg-talentsleuth-light"
-            onClick={() => navigate('/job-fitment')}
+            className="bg-talentsleuth hover:bg-talentsleuth-light flex items-center gap-2"
+            onClick={handleContinue}
           >
             Continue to Job Matches
+            <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
       </div>

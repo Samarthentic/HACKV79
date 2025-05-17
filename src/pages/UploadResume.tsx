@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Check, Upload, Loader } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -7,6 +8,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { parseResume } from '@/services/resumeParsingService';
 
 type FileStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -73,7 +75,7 @@ const UploadResume = () => {
     }
   };
 
-  const simulateUpload = () => {
+  const simulateUpload = async () => {
     if (!file) return;
     
     setStatus('uploading');
@@ -86,15 +88,33 @@ const UploadResume = () => {
         if (newProgress >= 100) {
           clearInterval(interval);
           setStatus('success');
-          toast({
-            title: "Upload complete",
-            description: "Your resume has been successfully uploaded.",
-          });
           return 100;
         }
         return newProgress;
       });
-    }, 300);
+    }, 200);
+    
+    try {
+      // Start resume parsing process as soon as upload completes
+      setTimeout(async () => {
+        clearInterval(interval);
+        setUploadProgress(100);
+        setStatus('success');
+        
+        // Wait a moment for upload to complete animation
+        setTimeout(() => {
+          navigate('/processing', { state: { file } });
+        }, 500);
+      }, 2000);
+    } catch (error) {
+      clearInterval(interval);
+      setStatus('error');
+      toast({
+        title: "Error uploading file",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleNext = () => {
@@ -109,14 +129,9 @@ const UploadResume = () => {
     
     if (status !== 'success') {
       simulateUpload();
-      
-      // After 3 seconds, redirect to processing screen
-      setTimeout(() => {
-        navigate('/processing');
-      }, 3000);
     } else {
       // Go to processing page immediately if already uploaded
-      navigate('/processing');
+      navigate('/processing', { state: { file } });
     }
   };
 
