@@ -6,13 +6,7 @@ import { jobsData } from '@/services/jobs/jobsData';
 import { calculateJobMatches, JobMatch } from '@/services/jobs/jobMatchingService';
 import { aggregatePublicData } from '@/services/publicData/aggregationService';
 import { generateCandidateDossier, CandidateDossier } from '@/services/dossier/candidateDossierService';
-import llmService from '@/services/llm/llmService';
-
-type LlmAnalysisData = {
-  strengths: string[];
-  areasToImprove: string[];
-  redFlags: Array<{severity: "high" | "medium" | "low"; issue: string; impact: string;}>;
-}
+import llmService, { LlmAnalysisData } from '@/services/llm/llmService';
 
 export const useJobFitment = (resumeData: ParsedResume | null, isLlmConfigured: boolean) => {
   const [jobMatches, setJobMatches] = useState<JobMatch[]>([]);
