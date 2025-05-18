@@ -9,4 +9,9 @@ export interface ResumePageProps {
   isLlmConfigured?: boolean;
   isEnhancing?: boolean;
   onEnableAI?: () => void;
+  publicData?: {
+    linkedin?: any;
+    github?: any;
+    discrepancies?: Array<{type: string, description: string}>;
+  };
 }

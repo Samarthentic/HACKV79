@@ -8,12 +8,15 @@ import { useLlm } from '@/contexts/LlmContext';
 import ApiKeySetup from '@/components/llm/ApiKeySetup';
 import llmService from '@/services/llm/llmService';
 import { toast } from '@/hooks/use-toast';
+import { aggregatePublicData, PublicDataResult } from '@/services/publicData/aggregationService';
 
 const ResumeSummary = () => {
   const [resumeData, setResumeData] = useState<ParsedResume | null>(null);
   const [originalData, setOriginalData] = useState<ParsedResume | null>(null);
   const [showLlmSetup, setShowLlmSetup] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [publicData, setPublicData] = useState<PublicDataResult | undefined>(undefined);
+  const [isAggregatingData, setIsAggregatingData] = useState(false);
   const { isConfigured } = useLlm();
   const navigate = useNavigate();
 
@@ -23,6 +26,54 @@ const ResumeSummary = () => {
       enhanceResume(originalData);
     }
   }, [isConfigured, originalData]);
+
+  useEffect(() => {
+    // Aggregate public data when resume data is loaded
+    if (resumeData && !publicData && !isAggregatingData) {
+      fetchPublicData(resumeData);
+    }
+  }, [resumeData, publicData, isAggregatingData]);
+
+  const fetchPublicData = async (data: ParsedResume) => {
+    try {
+      setIsAggregatingData(true);
+      toast({
+        title: "Aggregating Public Data",
+        description: "Searching for public information about the candidate...",
+      });
+      
+      const result = await aggregatePublicData(data);
+      setPublicData(result);
+      
+      // Show toast based on results
+      if (Object.keys(result).length > 0) {
+        const sources = Object.keys(result).filter(k => k !== 'discrepancies').join(' and ');
+        if (sources) {
+          toast({
+            title: "Public Data Found",
+            description: `Found data from ${sources} for enhanced candidate evaluation.`,
+          });
+        }
+        
+        if (result.discrepancies && result.discrepancies.length > 0) {
+          toast({
+            title: "Discrepancies Detected",
+            description: `Found ${result.discrepancies.length} potential discrepancies in candidate information.`,
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error aggregating public data:", error);
+      toast({
+        title: "Data Aggregation Error",
+        description: "Could not retrieve public data for this candidate.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAggregatingData(false);
+    }
+  };
 
   const enhanceResume = async (data: ParsedResume) => {
     if (!isConfigured || !data || isEnhancing) return;
@@ -128,6 +179,7 @@ const ResumeSummary = () => {
             isLlmConfigured={isConfigured}
             isEnhancing={isEnhancing}
             onEnableAI={handleEnableAI}
+            publicData={publicData}
           />
         );
       }}
