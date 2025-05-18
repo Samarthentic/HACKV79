@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Briefcase } from 'lucide-react';
 import JobMatchList from './JobMatchList';
-import { JobMatch } from '@/services/jobs/jobMatchingService';
+import { JobMatch } from '@/services/jobs/jobMatching';
 
 interface JobMatchesCardProps {
   matches: JobMatch[];

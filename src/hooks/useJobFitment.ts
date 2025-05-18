@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { ParsedResume } from '@/services/resumeParsingService';
 import { jobsData } from '@/services/jobs/jobsData';
-import { calculateJobMatches, JobMatch } from '@/services/jobs/jobMatchingService';
+import { calculateJobMatches, JobMatch } from '@/services/jobs/jobMatching';
 import { aggregatePublicData } from '@/services/publicData/aggregationService';
 import { generateCandidateDossier, CandidateDossier } from '@/services/dossier/candidateDossierService';
 import llmService, { LlmAnalysisData } from '@/services/llm/llmService';

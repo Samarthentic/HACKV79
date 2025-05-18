@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { ParsedResume } from '@/services/resumeParsingService';
-import { JobMatch } from '@/services/jobs/jobMatchingService';
+import { JobMatch } from '@/services/jobs/jobMatching';
 import { CandidateDossier } from '@/services/dossier/candidateDossierService';
 import { getOverallScore, getStrengths, getAreasToImprove, getRedFlags } from '@/services/jobs/jobAnalysisUtils';
 

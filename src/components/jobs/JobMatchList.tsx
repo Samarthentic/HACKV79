@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { JobMatch } from '@/services/jobs/jobMatchingService';
+import { JobMatch } from '@/services/jobs/jobMatching';
 
 interface JobMatchListProps {
   matches: JobMatch[];
