@@ -3,7 +3,7 @@ import llmBaseService from './llmBaseService';
 import resumeEnhancementService from './resumeEnhancementService';
 import jobAnalysisService, { LlmAnalysisData } from './jobAnalysisService';
 import { ParsedResume } from '../resume/types';
-import { JobMatch } from '../jobs/jobMatchingService';
+import { JobMatch } from '../jobs/jobMatching';
 
 /**
  * Main service for handling interactions with Language Learning Models (LLMs)

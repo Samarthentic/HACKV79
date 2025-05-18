@@ -2,7 +2,7 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { ParsedResume } from '@/services/resumeParsingService';
-import { JobMatch } from '@/services/jobs/jobMatchingService';
+import { JobMatch } from '@/services/jobs/jobMatching';
 
 export const exportJobFitmentToPDF = async (
   containerId: string,

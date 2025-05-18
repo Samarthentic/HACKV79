@@ -1,6 +1,6 @@
 
 import { ParsedResume } from '../resume/types';
-import { JobMatch } from '../jobs/jobMatchingService';
+import { JobMatch } from '../jobs/jobMatching';
 import llmBaseService from './llmBaseService';
 
 // Defining the type for LLM analysis results to ensure type safety

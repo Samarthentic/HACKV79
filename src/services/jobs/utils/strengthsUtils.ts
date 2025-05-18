@@ -1,6 +1,6 @@
 
 import { ParsedResume } from "../../resume/types";
-import { JobMatch } from "../jobMatchingService";
+import { JobMatch } from "../jobMatching";
 import { getTopMatchingSkills } from "./skillsUtils";
 
 /**

@@ -1,5 +1,6 @@
+
 import { ParsedResume } from '../resumeParsingService';
-import { JobMatch } from '../jobs/jobMatchingService';
+import { JobMatch } from '../jobs/jobMatching';
 
 export type CandidateDossier = {
   summary: string;

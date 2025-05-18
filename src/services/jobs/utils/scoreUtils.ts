@@ -1,5 +1,5 @@
 
-import { JobMatch } from "../jobMatchingService";
+import { JobMatch } from "../jobMatching";
 
 /**
  * Calculate overall score based on top matches

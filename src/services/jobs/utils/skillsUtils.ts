@@ -1,5 +1,5 @@
 
-import { JobMatch } from "../jobMatchingService";
+import { JobMatch } from "../jobMatching";
 
 /**
  * Get top matching skills across all job matches
