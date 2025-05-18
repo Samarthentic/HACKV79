@@ -41,8 +41,9 @@ export class LLMBaseService {
 
   /**
    * Handle API request with proper error handling
+   * Made public instead of protected to allow access from other services
    */
-  protected async makeRequest(endpoint: string, body: any): Promise<any> {
+  public async makeRequest(endpoint: string, body: any): Promise<any> {
     if (!this.apiKey) {
       throw new Error('API key not configured');
     }
